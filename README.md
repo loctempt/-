@@ -2,16 +2,16 @@
 
 > An electron-vue project
 
-#### Build Setup
+#### Build Setup 构建指南
 
 ``` bash
-# install dependencies
+# install dependencies 安装依赖
 npm install
 
-# serve with hot reload at localhost:9080
+# serve with hot reload at localhost:9080 在localhost:9080上运行，带热重载
 npm run dev
 
-# build electron application for production
+# build electron application for production 发布electron应用
 npm run build
 
 
