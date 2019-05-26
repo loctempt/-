@@ -5,8 +5,11 @@
 #### Build Setup 构建指南
 
 ``` bash
+# clone the repository 下载仓库
+git clone git@github.com:loctempt/Visualization_experiment.git
+
 # install dependencies 安装依赖
-npm install
+cnpm install
 
 # serve with hot reload at localhost:9080 在localhost:9080上运行，带热重载
 npm run dev
