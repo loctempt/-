@@ -9,7 +9,7 @@ import db from './database'
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'));
 Vue.http = Vue.prototype.$http = axios;
 Vue.config.productionTip = false;
-Vue.prototype.$db = db;
+Vue.prototype.$db = db;     // 将db对象加到Vue原型上，便于使用
 
 /* eslint-disable no-new */
 new Vue({
