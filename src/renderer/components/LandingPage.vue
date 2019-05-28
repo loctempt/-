@@ -192,6 +192,11 @@
         components: {SvgMap, SystemInformation},
         mounted() {
 
+            // this.$db.query('select * from new_table', (err, res, fields)=>{
+            //     if(err) throw err;
+            //     console.log(res);
+            // });
+
             // // 查询数据库
             // this.$db.getDB((db) => {
             //     let dbo = db.db('vis');
