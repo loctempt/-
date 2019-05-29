@@ -17,6 +17,14 @@
                         :value="item.value">
                 </el-option>
             </el-select>
+            <el-dialog title="传感器人数统计" :visible.sync="dialogTableVisible">
+                传感器：{{sensorId}} <br>
+                总人数:{{countPersons}}
+                <el-table :data="idList">
+                    <el-table-column property="id" label="人员ID" ></el-table-column>
+                    <el-table-column property="time" label="时间" ></el-table-column>
+                </el-table>
+            </el-dialog>
         </div>
         <svg></svg>
     </div>
@@ -26,6 +34,8 @@
     let d3 = require('d3');
     let db = require('../database');
     let util = require('../util');
+
+    let vm = null;
 
     function renderFloorMap(floor) {
         d3.select('svg')
@@ -234,7 +244,11 @@
             [sid, day, time, time + 600],
             (err, res, field) => {
                 if (err) throw err;
-                console.log(time, '此刻有人数', cnt);
+                console.log(sid, '在',time, '时刻有人数', cnt);
+                vm.sensorId = sid;
+                vm.countPersons = cnt;
+                vm.dialogTableVisible = true;
+                vm.idList = res;
                 for (let i = 0; i < res.length; i++) res[i].time = util.parseTime(res[i].time);
                 console.log(res);
             }
@@ -4684,7 +4698,12 @@
                     }, {
                         value: '90',
                         label: '20:50'
-                    },],
+                    },
+                ],
+                dialogTableVisible: false,
+                sensorId: null,
+                countPersons: 0,
+                idList: []
             }
         },
         watch: {
@@ -4697,6 +4716,7 @@
             }
         },
         mounted() {
+            vm = this;
             let svg = d3.select('svg')         // 设置svg元素
                 .attr('width', svgWidth)       // 设置宽度
                 .attr('height', svgHeight);    // 设置高度
