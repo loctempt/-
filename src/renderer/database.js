@@ -15,20 +15,21 @@
 //     }
 // };
 // import mysql from 'mysql';
-let mysql = require('mysql');
-let connection = mysql.createConnection({
+
+let mysql = require('mysql');   // 引用mysql模块
+let connection = mysql.createConnection({   // 登录信息
     host: 'localhost',
     port: '3306',
     user: 'root',
     password: 'mysql123',
     database: 'vis'
 });
-connection.connect(function(err) {
+connection.connect(function (err) {         // 连接数据库
     if (err) {
         console.error('error connecting: ' + err.stack);
         return;
     }
 
-    console.log('connected as id ' + connection.threadId);
+    console.log('connected as id ' + connection.threadId);  // 连接成功，显示一个线程号
 });
-module.exports = connection;
+module.exports = connection;                // 导出数据库连接对象，在程序中用
