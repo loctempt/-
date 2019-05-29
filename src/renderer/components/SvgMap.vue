@@ -149,6 +149,10 @@
             })
     }
 
+    /**
+     * 渲染热力图
+     * @param heatData 表示热力图的数据
+     */
     function renderHeatMap(heatData) {
         console.log(heatData);
         let linear = d3.scaleLinear()
@@ -156,9 +160,7 @@
             .range([0, 1]);
         let compute = d3.interpolate(d3.rgb(166, 192, 254), d3.rgb(246, 128, 132));//红色渐变到绿色
 
-        d3.select('svg')
-            .selectAll('.heat')
-            .remove();
+        removeHeatMap();
 
         d3.select('svg')
             .selectAll('.heat')
@@ -187,6 +189,27 @@
                 // console.log('rgba'+rgb.substr(3, rgb.length-4) + ',0.7)');
                 return 'rgba' + rgb.substr(3, rgb.length - 4) + ',0.7)';
             })
+    }
+
+    /**
+     * 删除热力图
+     */
+    function removeHeatMap() {
+        d3.select('svg')
+            .selectAll('.heat')
+            .remove();
+    }
+
+    function hideHeatMap() {
+        d3.select('svg')
+            .selectAll('.heat')
+            .attr('hidden')
+    }
+
+    function showHeatMap() {
+        d3.select('svg')
+            .selectAll('.heat')
+            .attr('hidden', null)
     }
 
     // 在一楼显示人员路径
@@ -4321,12 +4344,12 @@
             // renderFloorDetail(floorDetail);    // 显示各个区域
 
             // this.findRouteById(idForTest, 1);  // todo 把写死的第一天 改成动态的
-            this.showHeatMap(1, 30);
+            this.showHeatMap(1, 32);
         },
         methods: {
             showHeatMap: function (day, timePoint) {//传入日期
                 this.$db.query(
-                    'select x, y, floor, time, count(*) cnt from `days` join sensors using(`sid`) where `day`=? and `time` between ? and ? group by `sid`',
+                    'select sid, x, y, floor, time, count(*) cnt from `days` join sensors using(`sid`) where `day`=? and `time` between ? and ? group by `sid`',
                     [day, baseTime + timePoint * timeInterval, baseTime + (timePoint + 1) * timeInterval],    // 取第timePoint个时间间隔内的人数
                     (err, res, field) => {
                         if (err) throw err;
