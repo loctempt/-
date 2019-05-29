@@ -108,14 +108,77 @@
                 return (d.x2 - d.x1) * rectWidth / 2 + 5;
             })
             .attr('dx', function (d) {
-                return (d.y2 - d.y1) * rectWidth / 2;
+                return (d.y2  - d.y1) * rectWidth / 2;
             })
             .attr('text-anchor', 'middle')
             .text(function (d) {
                 return d.name;
             })
     }
+    function transparentLayer(){
+        let pos=[{'x':marginLeft,'y':marginTop,'floor':1},{'x':marginLeft,'y':(16 * rectWidth + 20)+marginTop,'floor':2}];
+        console.log('显示透明图层');
+        d3.select('svg')
+            .selectAll('.transparent')
+            .data(pos)
+            .enter()
+            .append('rect')
+            .attr('class','transparent')
+            .attr('y',function (d) {
+                if (d.floor === 1)
+                    return  d.y;
+                else if (d.floor === 2)
+                    return  d.y;  // 留出顶边距
+            })
+            .attr('x',function (d) {
+                return d.x ; // 留出左边距
+            })
+            .attr('width', function (d) {
+                return  rectWidth * 30 ;
+            })
+            .attr('height',function (d) {
+                return 16 * rectWidth;
+            })
+            .attr('fill',function (d) {
+                return 'rgba(100,0,0,0.2)';
+            })
+    }
 
+    function heatMapLayer(heatData) {
+        let linear = d3.scale.linear()
+            .domain([0,150])
+            .range([0,1]);
+        let compute=d3.interpolate(d3.rgba(255,0,0,0.1),d3.rgba(0,255,0,0.1));//红色渐变到绿色
+
+        d3.select('svg')
+            .selectAll('.heat')
+            .remove();
+
+        d3.select('svg')
+            .selectAll('.heat')
+            .data(heatData)
+            .enter()
+            .append('rect')
+            .attr('class','heat')
+            .attr('y',function (d) {
+                if (d.route.floor === 1)
+                    return d.route.x * (rectWidth) + marginTop;
+                else if (d.route.floor === 2)
+                    return d.route.x * (rectWidth) + marginTop + (16 * rectWidth + 20);  // 留出顶边距
+            })
+            .attr('x',function (d) {
+                return  d.route.y * (rectWidth) + marginLeft; // 留出左边距
+            })
+            .attr('width', function (d) {
+                return rectWidth;
+            })
+            .attr('height', function (d) {
+                return rectWidth;
+            })
+            .attr('fill',function (d) {
+                return compute(linear(d.frequency));
+            })
+    }
     // 在一楼显示人员路径
     function renderRoutes(route, no = 1) {
         d3.select('svg')
@@ -4240,10 +4303,23 @@
                 .attr('height', svgHeight);    // 设置高度
 
             renderFloorMap(floor);        // 渲染地图底图
-            renderFloorDetail(floorDetail);    // 显示各个区域
+             renderFloorDetail(floorDetail);    // 显示各个区域
+            transparentLayer();
+            // renderFloorDetail(floorDetail);    // 显示各个区域
+
             this.findRouteById(idForTest, 1);  // todo 把写死的第一天 改成动态的
         },
         methods: {
+            heatMaplayer:function(day){//传入日期
+                this.$db.getDB((db)=>{
+                    let a = db.db('vis');
+                    // for(){
+                    //
+                    // } todo 连表思路是：取一条记录 去布置表中外键查对应的id 并将[x][y][z]++
+
+                })
+            },
+
             findRouteById: function (ids, day) {    // 传入人员id和日期，显示人员行走路径
                 this.$db.getDB((db) => {
                     let dbo = db.db('vis');         // 选择数据库'vis'
