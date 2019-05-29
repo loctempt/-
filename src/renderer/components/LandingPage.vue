@@ -192,6 +192,11 @@
         components: {SvgMap, SystemInformation},
         mounted() {
 
+            // this.$db.query('select * from new_table', (err, res, fields)=>{
+            //     if(err) throw err;
+            //     console.log(res);
+            // });
+
             // // 查询数据库
             // this.$db.getDB((db) => {
             //     let dbo = db.db('vis');
@@ -215,68 +220,117 @@
                 this.$electron.shell.openExternal(link)
             },
             getEntranceCount() {
-                this.$db.getDB((db) => {
-                    let dbo = db.db('vis');
-                    dbo.collection('days').find(  // 查询入场记录
-                        {day: this.day, $or: [{sid: 11502}, {sid: 11504}, {sid: 11507}, {sid: 11300}]})
-                        .toArray((err, timeArr) => {
-                            if (err) throw err;
-                            timeArr.sort((a, b) => {    // 将入场记录按时间排序
-                                return a.time - b.time;
-                            });
-                            // console.log('timeArr:', timeArr);
-                            let entranceData = [];
-                            for (let timePoint = 0; timePoint <= 90; timePoint++) {
-                                let timeIdx = upperBound(timeArr, timePoint);
-                                if (timeIdx === -1) entranceData.push(0);    // 若未查到数据，给这个时刻赋个零人
-                                else {
-                                    let cnt = 0;
-                                    for (; timeIdx < timeArr.length; timeIdx++) {  // 统计10分钟内所有的入场人数
-                                        // console.log(timeIdx ,'valid?', isTimeValid(timePoint, timeArr[timeIdx]));
-                                        if (isTimeValid(timePoint, timeArr[timeIdx])) cnt++; // 遍历到的时间与timePoint差距小于10分钟，计数器加一
-                                        else break;
-                                    }
-                                    entranceData.push(cnt);
-
+                this.$db.query(
+                    "select `time` from days where `day` = ? and `sid` in (11300,11502,11504,11507) order by `time`",
+                    [this.day],
+                    (err, timeArr, field) => {
+                        if (err) throw err;
+                        let entranceData = [];
+                        for (let timePoint = 0; timePoint <= 90; timePoint++) {
+                            let timeIdx = upperBound(timeArr, timePoint);
+                            if (timeIdx === -1) entranceData.push(0);    // 若未查到数据，给这个时刻赋个零人
+                            else {
+                                let cnt = 0;
+                                for (; timeIdx < timeArr.length; timeIdx++) {  // 统计10分钟内所有的入场人数
+                                    // console.log(timeIdx ,'valid?', isTimeValid(timePoint, timeArr[timeIdx]));
+                                    if (isTimeValid(timePoint, timeArr[timeIdx])) cnt++; // 遍历到的时间与timePoint差距小于10分钟，计数器加一
+                                    else break;
                                 }
+                                entranceData.push(cnt);
+
                             }
-                            // console.log('entranceData:', entranceData);
-                            option.series[0].data = entranceData;
-                            this.myChart.setOption(option);
-                        })
-                })
+                        }
+                        option.series[0].data = entranceData;
+                        this.myChart.setOption(option);
+                    }
+                );
+                // this.$db.getDB((db) => {
+                //     let dbo = db.db('vis');
+                //     dbo.collection('days').find(  // 查询入场记录
+                //         {day: this.day, $or: [{sid: 11502}, {sid: 11504}, {sid: 11507}, {sid: 11300}]})
+                //         .toArray((err, timeArr) => {
+                //             if (err) throw err;
+                //             timeArr.sort((a, b) => {    // 将入场记录按时间排序
+                //                 return a.time - b.time;
+                //             });
+                //             // console.log('timeArr:', timeArr);
+                //             let entranceData = [];
+                //             for (let timePoint = 0; timePoint <= 90; timePoint++) {
+                //                 let timeIdx = upperBound(timeArr, timePoint);
+                //                 if (timeIdx === -1) entranceData.push(0);    // 若未查到数据，给这个时刻赋个零人
+                //                 else {
+                //                     let cnt = 0;
+                //                     for (; timeIdx < timeArr.length; timeIdx++) {  // 统计10分钟内所有的入场人数
+                //                         // console.log(timeIdx ,'valid?', isTimeValid(timePoint, timeArr[timeIdx]));
+                //                         if (isTimeValid(timePoint, timeArr[timeIdx])) cnt++; // 遍历到的时间与timePoint差距小于10分钟，计数器加一
+                //                         else break;
+                //                     }
+                //                     entranceData.push(cnt);
+                //
+                //                 }
+                //             }
+                //             // console.log('entranceData:', entranceData);
+                //             option.series[0].data = entranceData;
+                //             this.myChart.setOption(option);
+                //         })
+                // })
             },
             getDepartureCount() {
-                this.$db.getDB((db) => {
-                    let dbo = db.db('vis');
-                    dbo.collection('days').find(  // 查询出场记录
-                        {day: this.day, $or: [{sid: 10019}, {sid: 11505}, {sid: 11515}, {sid: 11517}]})
-                        .toArray((err, timeArr) => {
-                            if (err) throw err;
-                            timeArr.sort((a, b) => {    // 将出场记录按时间排序
-                                return a.time - b.time;
-                            });
-                            // console.log('timeArr:', timeArr);
-                            let departureData = [];
-                            for (let timePoint = 0; timePoint <= 90; timePoint++) {
-                                let timeIdx = upperBound(timeArr, timePoint);
-                                if (timeIdx === -1) departureData.push(0);    // 若未查到数据，给这个时刻赋个零人
-                                else {
-                                    let cnt = 0;
-                                    for (; timeIdx < timeArr.length; timeIdx++) {  // 统计10分钟内所有的入场人数
-                                        // console.log(timeIdx ,'valid?', isTimeValid(timePoint, timeArr[timeIdx]));
-                                        if (isTimeValid(timePoint, timeArr[timeIdx])) cnt++; // 遍历到的时间与timePoint差距小于10分钟，计数器加一
-                                        else break;
-                                    }
-                                    departureData.push(cnt);
-
+                this.$db.query(
+                    "select `time` from days where `day` = ? and `sid` in (10019,11505,11515,11517) order by `time`",
+                    [this.day],
+                    (err, timeArr, field) => {
+                        if (err) throw err;
+                        let departureData = [];
+                        for (let timePoint = 0; timePoint <= 90; timePoint++) {
+                            let timeIdx = upperBound(timeArr, timePoint);
+                            if (timeIdx === -1) departureData.push(0);    // 若未查到数据，给这个时刻赋个零人
+                            else {
+                                let cnt = 0;
+                                for (; timeIdx < timeArr.length; timeIdx++) {  // 统计10分钟内所有的入场人数
+                                    // console.log(timeIdx ,'valid?', isTimeValid(timePoint, timeArr[timeIdx]));
+                                    if (isTimeValid(timePoint, timeArr[timeIdx])) cnt++; // 遍历到的时间与timePoint差距小于10分钟，计数器加一
+                                    else break;
                                 }
+                                departureData.push(cnt);
+
                             }
-                            // console.log('departureData:', departureData);
-                            option.series[1].data = departureData;
-                            this.myChart.setOption(option);
-                        })
-                })
+                        }
+                        option.series[1].data = departureData;
+                        this.myChart.setOption(option);
+                    }
+                );
+
+                // this.$db.getDB((db) => {
+                //     let dbo = db.db('vis');
+                //     dbo.collection('days').find(  // 查询出场记录
+                //         {day: this.day, $or: [{sid: 10019}, {sid: 11505}, {sid: 11515}, {sid: 11517}]})
+                //         .toArray((err, timeArr) => {
+                //             if (err) throw err;
+                //             timeArr.sort((a, b) => {    // 将出场记录按时间排序
+                //                 return a.time - b.time;
+                //             });
+                //             // console.log('timeArr:', timeArr);
+                //             let departureData = [];
+                //             for (let timePoint = 0; timePoint <= 90; timePoint++) {
+                //                 let timeIdx = upperBound(timeArr, timePoint);
+                //                 if (timeIdx === -1) departureData.push(0);    // 若未查到数据，给这个时刻赋个零人
+                //                 else {
+                //                     let cnt = 0;
+                //                     for (; timeIdx < timeArr.length; timeIdx++) {  // 统计10分钟内所有的入场人数
+                //                         // console.log(timeIdx ,'valid?', isTimeValid(timePoint, timeArr[timeIdx]));
+                //                         if (isTimeValid(timePoint, timeArr[timeIdx])) cnt++; // 遍历到的时间与timePoint差距小于10分钟，计数器加一
+                //                         else break;
+                //                     }
+                //                     departureData.push(cnt);
+                //
+                //                 }
+                //             }
+                //             // console.log('departureData:', departureData);
+                //             option.series[1].data = departureData;
+                //             this.myChart.setOption(option);
+                //         })
+                // })
             }
         }
     }

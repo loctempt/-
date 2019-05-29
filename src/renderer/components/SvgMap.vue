@@ -188,13 +188,13 @@
             .append('rect')
             .attr('class', 'route')
             .attr('y', function (d) {
-                if (d.route.floor === 1)
-                    return d.route.x * (rectWidth) + marginTop;
-                else if (d.route.floor === 2)
-                    return d.route.x * (rectWidth) + marginTop + (16 * rectWidth + 20);  // 留出顶边距
+                if (d.floor === 1)
+                    return d.x * (rectWidth) + marginTop;
+                else if (d.floor === 2)
+                    return d.x * (rectWidth) + marginTop + (16 * rectWidth + 20);  // 留出顶边距
             })
             .attr('x', function (d) {
-                return d.route.y * (rectWidth) + marginLeft; // 留出左边距
+                return d.y * (rectWidth) + marginLeft; // 留出左边距
             })
             .transition()                   // 在确定顶点坐标后设置动画
             .delay(function (d, i) {
@@ -4287,7 +4287,7 @@
     const marginTop = 5;
 
     //===============  for testing  =================
-    const idForTest = [18645,];
+    const idForTest = [18473];
     //===============  for testing  =================
 
     let svgWidth = 1800, svgHeight = 1400;
@@ -4321,38 +4321,55 @@
             },
 
             findRouteById: function (ids, day) {    // 传入人员id和日期，显示人员行走路径
-                this.$db.getDB((db) => {
-                    let dbo = db.db('vis');         // 选择数据库'vis'
-                    for (let idIdx = 0; idIdx < ids.length; idIdx++)    // 遍历每个人员，查出一条路径就画一条路径
-                        dbo.collection('days').aggregate([              // 做连接，查出指定人员的路径信息
-                            {
-                                $lookup:
-                                    {from: 'sensors', localField: 'sid', foreignField: 'sid', as: 'route'}
-                            },
-                            {
-                                $match: {"id": ids[idIdx], 'day': day}
-                            },
-                            {
-                                $project: {'route': 3, 'id': 1, 'time': 2, '_id': 0}    // 数字顺序无关紧要
-                            }])
-                            .toArray((err, res) => {    // 将查询到的记录转成数组
-                                if (err) throw err;
-                                console.log('find:', ids[idIdx]);
-                                let tRoute = [];
-                                for (let i = 0; i < res.length; i++) {  // 遍历查出来的每条记录
-                                    tRoute.push({time: res[i].time, route: res[i].route[0], duration: 0});  // 将记录中有用的部分取出，
-                                    // 形成新数组
-                                }
-                                tRoute.sort((a, b) => {
-                                    return a.time - b.time;
-                                });
-                                for (let i = tRoute.length - 1; i >= 0; i--) {  // 计算每个路径点的停留时长
-                                    tRoute[i].duration = tRoute[i].time - tRoute[0].time;
-                                }
-                                console.log(tRoute);
-                                renderRoutes(tRoute); // 获得路径后显示出来
-                            });
-                });
+                for (let idIdx = 0; idIdx < ids.length; idIdx++) {
+                    this.$db.query(
+                        'select * from days a join sensors using(`sid`) where `id`=? and `day`=? order by `time`',
+                        [ids[idIdx], day],
+                        (err, res, field) => {
+                            if (err) throw err;
+                            for (let resIdx = 0; resIdx < res.length; resIdx++) {  // 遍历查出来的每条记录
+                                res[resIdx].duration = 0; // 将记录中有用的部分取出，
+                            }
+                            for (let resIdx = res.length - 1; resIdx >= 0; resIdx--) {  // 计算每个路径点的停留时长
+                                res[resIdx].duration = res[resIdx].time - res[0].time;
+                            }
+                            renderRoutes(res); // 获得路径后显示出来
+                        }
+                    )
+                }
+
+                // this.$db.getDB((db) => {
+                //     let dbo = db.db('vis');         // 选择数据库'vis'
+                //     for (let idIdx = 0; idIdx < ids.length; idIdx++)    // 遍历每个人员，查出一条路径就画一条路径
+                //         dbo.collection('days').aggregate([              // 做连接，查出指定人员的路径信息
+                //             {
+                //                 $lookup:
+                //                     {from: 'sensors', localField: 'sid', foreignField: 'sid', as: 'route'}
+                //             },
+                //             {
+                //                 $match: {"id": ids[idIdx], 'day': day}
+                //             },
+                //             {
+                //                 $project: {'route': 3, 'id': 1, 'time': 2, '_id': 0}    // 数字顺序无关紧要
+                //             }])
+                //             .toArray((err, res) => {    // 将查询到的记录转成数组
+                //                 if (err) throw err;
+                //                 console.log('find:', ids[idIdx]);
+                //                 let tRoute = [];
+                //                 for (let i = 0; i < res.length; i++) {  // 遍历查出来的每条记录
+                //                     tRoute.push({time: res[i].time, route: res[i].route[0], duration: 0});  // 将记录中有用的部分取出，
+                //                     // 形成新数组
+                //                 }
+                //                 tRoute.sort((a, b) => {
+                //                     return a.time - b.time;
+                //                 });
+                //                 for (let i = tRoute.length - 1; i >= 0; i--) {  // 计算每个路径点的停留时长
+                //                     tRoute[i].duration = tRoute[i].time - tRoute[0].time;
+                //                 }
+                //                 console.log(tRoute);
+                //                 renderRoutes(tRoute); // 获得路径后显示出来
+                //             });
+                // });
             }
         }
     }
