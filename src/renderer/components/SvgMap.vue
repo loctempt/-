@@ -3,7 +3,7 @@
 </template>
 
 <script>
-    import * as d3 from 'd3';
+    let d3 = require('d3');
 
     function renderFloorMap(floor) {
         d3.select('svg')
@@ -108,47 +108,53 @@
                 return (d.x2 - d.x1) * rectWidth / 2 + 5;
             })
             .attr('dx', function (d) {
-                return (d.y2  - d.y1) * rectWidth / 2;
+                return (d.y2 - d.y1) * rectWidth / 2;
             })
             .attr('text-anchor', 'middle')
             .text(function (d) {
                 return d.name;
             })
     }
-    function transparentLayer(){
-        let pos=[{'x':marginLeft,'y':marginTop,'floor':1},{'x':marginLeft,'y':(16 * rectWidth + 20)+marginTop,'floor':2}];
+
+    function transparentLayer() {
+        let pos = [{'x': marginLeft, 'y': marginTop, 'floor': 1}, {
+            'x': marginLeft,
+            'y': (16 * rectWidth + 20) + marginTop,
+            'floor': 2
+        }];
         console.log('显示透明图层');
         d3.select('svg')
             .selectAll('.transparent')
             .data(pos)
             .enter()
             .append('rect')
-            .attr('class','transparent')
-            .attr('y',function (d) {
+            .attr('class', 'transparent')
+            .attr('y', function (d) {
                 if (d.floor === 1)
-                    return  d.y;
+                    return d.y;
                 else if (d.floor === 2)
-                    return  d.y;  // 留出顶边距
+                    return d.y;  // 留出顶边距
             })
-            .attr('x',function (d) {
-                return d.x ; // 留出左边距
+            .attr('x', function (d) {
+                return d.x; // 留出左边距
             })
             .attr('width', function (d) {
-                return  rectWidth * 30 ;
+                return rectWidth * 30;
             })
-            .attr('height',function (d) {
+            .attr('height', function (d) {
                 return 16 * rectWidth;
             })
-            .attr('fill',function (d) {
-                return 'rgba(100,0,0,0.2)';
+            .attr('fill', function (d) {
+                return 'rgba(100,100,100,0.4)';
             })
     }
 
-    function heatMapLayer(heatData) {
-        let linear = d3.scale.linear()
-            .domain([0,150])
-            .range([0,1]);
-        let compute=d3.interpolate(d3.rgba(255,0,0,0.1),d3.rgba(0,255,0,0.1));//红色渐变到绿色
+    function renderHeatMap(heatData) {
+        console.log(heatData);
+        let linear = d3.scaleLinear()
+            .domain([0, 500])
+            .range([0, 1]);
+        let compute = d3.interpolate(d3.rgb(166, 192, 254), d3.rgb(246, 128, 132));//红色渐变到绿色
 
         d3.select('svg')
             .selectAll('.heat')
@@ -159,15 +165,15 @@
             .data(heatData)
             .enter()
             .append('rect')
-            .attr('class','heat')
-            .attr('y',function (d) {
-                if (d.route.floor === 1)
-                    return d.route.x * (rectWidth) + marginTop;
-                else if (d.route.floor === 2)
-                    return d.route.x * (rectWidth) + marginTop + (16 * rectWidth + 20);  // 留出顶边距
+            .attr('class', 'heat')
+            .attr('y', function (d) {
+                if (d.floor === 1)
+                    return d.x * (rectWidth) + marginTop;
+                else if (d.floor === 2)
+                    return d.x * (rectWidth) + marginTop + (16 * rectWidth + 20);  // 留出顶边距
             })
-            .attr('x',function (d) {
-                return  d.route.y * (rectWidth) + marginLeft; // 留出左边距
+            .attr('x', function (d) {
+                return d.y * (rectWidth) + marginLeft; // 留出左边距
             })
             .attr('width', function (d) {
                 return rectWidth;
@@ -175,10 +181,14 @@
             .attr('height', function (d) {
                 return rectWidth;
             })
-            .attr('fill',function (d) {
-                return compute(linear(d.frequency));
+            .attr('fill', function (d) {
+                // console.log(typeof(compute(linear(d.cnt))));
+                let rgb = compute(linear(d.cnt));
+                // console.log('rgba'+rgb.substr(3, rgb.length-4) + ',0.7)');
+                return 'rgba' + rgb.substr(3, rgb.length - 4) + ',0.7)';
             })
     }
+
     // 在一楼显示人员路径
     function renderRoutes(route, no = 1) {
         d3.select('svg')
@@ -4285,6 +4295,9 @@
     const strokeColor = "rgb(149, 149, 149)";
     const marginLeft = 10;
     const marginTop = 5;
+    const timeInterval = 600;   // 600sec，即十分钟时间间隔
+    const baseTime = 6 * 3600;
+
 
     //===============  for testing  =================
     const idForTest = [18473];
@@ -4303,21 +4316,23 @@
                 .attr('height', svgHeight);    // 设置高度
 
             renderFloorMap(floor);        // 渲染地图底图
-             renderFloorDetail(floorDetail);    // 显示各个区域
+            renderFloorDetail(floorDetail);    // 显示各个区域
             transparentLayer();
             // renderFloorDetail(floorDetail);    // 显示各个区域
 
-            this.findRouteById(idForTest, 1);  // todo 把写死的第一天 改成动态的
+            // this.findRouteById(idForTest, 1);  // todo 把写死的第一天 改成动态的
+            this.showHeatMap(1, 30);
         },
         methods: {
-            heatMaplayer:function(day){//传入日期
-                this.$db.getDB((db)=>{
-                    let a = db.db('vis');
-                    // for(){
-                    //
-                    // } todo 连表思路是：取一条记录 去布置表中外键查对应的id 并将[x][y][z]++
-
-                })
+            showHeatMap: function (day, timePoint) {//传入日期
+                this.$db.query(
+                    'select x, y, floor, time, count(*) cnt from `days` join sensors using(`sid`) where `day`=? and `time` between ? and ? group by `sid`',
+                    [day, baseTime + timePoint * timeInterval, baseTime + (timePoint + 1) * timeInterval],    // 取第timePoint个时间间隔内的人数
+                    (err, res, field) => {
+                        if (err) throw err;
+                        renderHeatMap(res);
+                    }
+                )
             },
 
             findRouteById: function (ids, day) {    // 传入人员id和日期，显示人员行走路径
