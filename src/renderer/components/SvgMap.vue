@@ -24,6 +24,8 @@
 
 <script>
     let d3 = require('d3');
+    let db = require('../database');
+    let util = require('../util');
 
     function renderFloorMap(floor) {
         d3.select('svg')
@@ -54,6 +56,9 @@
             });
     }
 
+    /**
+     * 显示两个楼层中各个场所的信息
+     */
     function renderFloorDetail(floorDetail) {
         d3.select('svg')
             .selectAll('.floorDetail')
@@ -114,7 +119,6 @@
             .enter()
             .append('text')
             .attr('class', 'detailText')
-            // .attr("transform","translate(-50% 0)")
             .attr('y', function (d) {
                 if (d.floor === 1)
                     return d.x1 * (rectWidth) + marginTop;  // 留出顶边距
@@ -136,6 +140,9 @@
             })
     }
 
+    /**
+     * 显示一个半透明遮罩，辅助热力图的显示
+     */
     function transparentLayer() {
         let pos = [{'x': marginLeft, 'y': marginTop, 'floor': 1}, {
             'x': marginLeft,
@@ -169,16 +176,18 @@
             })
     }
 
+    /**
+     * 渲染热力图
+     * @param heatData 表示热力图的数据
+     */
     function renderHeatMap(heatData) {
         console.log(heatData);
         let linear = d3.scaleLinear()
-            .domain([0, 200])
+            .domain([0, 500])
             .range([0, 1]);
         let compute = d3.interpolate(d3.rgb(166, 192, 254), d3.rgb(246, 128, 132));//红色渐变到绿色
 
-        d3.select('svg')
-            .selectAll('.heat')
-            .remove();
+        removeHeatMap();
 
         d3.select('svg')
             .selectAll('.heat')
@@ -202,11 +211,72 @@
                 return rectWidth;
             })
             .attr('fill', function (d) {
-                // console.log(typeof(compute(linear(d.cnt))));
                 let rgb = compute(linear(d.cnt));
-                // console.log('rgba'+rgb.substr(3, rgb.length-4) + ',0.7)');
-                return 'rgba' + rgb.substr(3, rgb.length - 4) + ',0.7)';
+                return 'rgba' + rgb.substr(3, rgb.length - 4) + ',0.7)';    // 将比例尺计算出的rgb颜色转换成rgba颜色
             })
+            .style('cursor', 'pointer')
+            .on('mouseup', function (d) {
+                console.log(d.sid);
+                getIdListBySidAndDayAndTime(d.sid, d.day, d.time, d.cnt);
+            })
+    }
+
+    /**
+     * 根据sid, day和time查询此时此传感器范围中共有多少人，有哪些人
+     * @param sid 传感器id
+     * @param day 日期
+     * @param time 时间（单位：秒）
+     * @param cnt 范围内人数
+     */
+    function getIdListBySidAndDayAndTime(sid, day, time, cnt) {
+        db.query(
+            'select `id`, `time` from `days` join sensors using(`sid`) where `sid`=? and `day`=? and `time` between ? and ? group by `id`',
+            [sid, day, time, time + 600],
+            (err, res, field) => {
+                if (err) throw err;
+                console.log(time, '此刻有人数', cnt);
+                for (let i = 0; i < res.length; i++) res[i].time = util.parseTime(res[i].time);
+                console.log(res);
+            }
+        )
+    }
+
+    /**
+     * 移除热力图
+     */
+    function removeHeatMap() {
+        d3.select('svg')
+            .selectAll('.heat')
+            .remove();
+    }
+
+    /**
+     * 销毁热力图
+     * 销毁热力图操作不仅移除热力图，还移除半透明遮罩，从而使热力图完全从svg中移除
+     */
+    function destroyHeatMap() {
+        removeHeatMap();
+        d3.select('svg')
+            .selectAll('.transparent')
+            .remove();
+    }
+
+    /**
+     * 隐藏热力图
+     */
+    function hideHeatMap() {
+        d3.select('svg')
+            .selectAll('.heat')
+            .attr('hidden')
+    }
+
+    /**
+     * 显示热力图
+     */
+    function displayHeatMap() {
+        d3.select('svg')
+            .selectAll('.heat')
+            .attr('hidden', null)
     }
 
     // 在一楼显示人员路径
@@ -4329,297 +4399,300 @@
         name: "SvgMap",
         data() {
             return {
-                dayvalue: "",
+                dayvalue: 1,
                 timepointvalue: "",
-                options1: [{
-                    value: '1',
-                    label: 'day1'
-                }, {
-                    value: '2',
-                    label: 'day2'
-                }, {
-                    value: '3',
-                    label: 'day3'
-                }],
-                options2: [{
-                    value: '0',
-                    label: '6:00'
-                }, {
-                    value: '1',
-                    label: '6:10'
-                }, {
-                    value: '2',
-                    label: '6:20'
-                }, {
-                    value: '3',
-                    label: '6:30'
-                }, {
-                    value: '4',
-                    label: '6:40'
-                }, {
-                    value: '5',
-                    label: '6:50'
-                }, {
-                    value: '6',
-                    label: '7:00'
-                }, {
-                    value: '7',
-                    label: '7:10'
-                }, {
-                    value: '8',
-                    label: '7:20'
-                }, {
-                    value: '9',
-                    label: '7:30'
-                }, {
-                    value: '10',
-                    label: '7:40'
-                }, {
-                    value: '11',
-                    label: '7:50'
-                }, {
-                    value: '12',
-                    label: '8:00'
-                }, {
-                    value: '13',
-                    label: '8:10'
-                }, {
-                    value: '14',
-                    label: '8:20'
-                }, {
-                    value: '15',
-                    label: '8:30'
-                }, {
-                    value: '16',
-                    label: '8:40'
-                }, {
-                    value: '17',
-                    label: '8:50'
-                }, {
-                    value: '18',
-                    label: '9:00'
-                }, {
-                    value: '19',
-                    label: '9:10'
-                }, {
-                    value: '20',
-                    label: '9:20'
-                }, {
-                    value: '21',
-                    label: '9:30'
-                }, {
-                    value: '22',
-                    label: '9:40'
-                }, {
-                    value: '23',
-                    label: '9:50'
-                }, {
-                    value: '24',
-                    label: '10:00'
-                }, {
-                    value: '25',
-                    label: '10:10'
-                }, {
-                    value: '26',
-                    label: '10:20'
-                }, {
-                    value: '27',
-                    label: '10:30'
-                }, {
-                    value: '28',
-                    label: '10:40'
-                }, {
-                    value: '29',
-                    label: '10:50'
-                }, {
-                    value: '30',
-                    label: '11:00'
-                }, {
-                    value: '31',
-                    label: '11:10'
-                }, {
-                    value: '32',
-                    label: '11:20'
-                }, {
-                    value: '33',
-                    label: '11:30'
-                }, {
-                    value: '34',
-                    label: '11:40'
-                }, {
-                    value: '35',
-                    label: '11:50'
-                }, {
-                    value: '36',
-                    label: '12:00'
-                }, {
-                    value: '37',
-                    label: '12:10'
-                }, {
-                    value: '38',
-                    label: '12:20'
-                }, {
-                    value: '39',
-                    label: '12:30'
-                }, {
-                    value: '40',
-                    label: '12:40'
-                }, {
-                    value: '41',
-                    label: '12:50'
-                }, {
-                    value: '42',
-                    label: '13:00'
-                }, {
-                    value: '43',
-                    label: '13:10'
-                }, {
-                    value: '44',
-                    label: '13:20'
-                }, {
-                    value: '45',
-                    label: '13:30'
-                }, {
-                    value: '46',
-                    label: '13:40'
-                }, {
-                    value: '47',
-                    label: '13:50'
-                }, {
-                    value: '48',
-                    label: '14:00'
-                }, {
-                    value: '49',
-                    label: '14:10'
-                }, {
-                    value: '50',
-                    label: '14:20'
-                }, {
-                    value: '51',
-                    label: '14:30'
-                }, {
-                    value: '52',
-                    label: '14:40'
-                }, {
-                    value: '53',
-                    label: '14:50'
-                }, {
-                    value: '54',
-                    label: '15:00'
-                }, {
-                    value: '55',
-                    label: '15:10'
-                }, {
-                    value: '56',
-                    label: '15:20'
-                }, {
-                    value: '57',
-                    label: '15:30'
-                }, {
-                    value: '58',
-                    label: '15:40'
-                }, {
-                    value: '59',
-                    label: '15:50'
-                }, {
-                    value: '60',
-                    label: '16:00'
-                }, {
-                    value: '61',
-                    label: '16:10'
-                }, {
-                    value: '62',
-                    label: '16:20'
-                }, {
-                    value: '63',
-                    label: '16:30'
-                }, {
-                    value: '64',
-                    label: '16:40'
-                }, {
-                    value: '65',
-                    label: '16:50'
-                }, {
-                    value: '66',
-                    label: '17:00'
-                }, {
-                    value: '67',
-                    label: '17:10'
-                }, {
-                    value: '68',
-                    label: '17:20'
-                }, {
-                    value: '69',
-                    label: '17:30'
-                }, {
-                    value: '71',
-                    label: '17:40'
-                }, {
-                    value: '72',
-                    label: '17:50'
-                }, {
-                    value: '73',
-                    label: '18:00'
-                }, {
-                    value: '74',
-                    label: '18:10'
-                }, {
-                    value: '75',
-                    label: '18:20'
-                }, {
-                    value: '76',
-                    label: '18:30'
-                }, {
-                    value: '77',
-                    label: '18:40'
-                }, {
-                    value: '78',
-                    label: '18:50'
-                }, {
-                    value: '79',
-                    label: '19:00'
-                }, {
-                    value: '80',
-                    label: '19:10'
-                }, {
-                    value: '81',
-                    label: '19:20'
-                }, {
-                    value: '82',
-                    label: '19:30'
-                }, {
-                    value: '83',
-                    label: '19:40'
-                }, {
-                    value: '84',
-                    label: '19:50'
-                }, {
-                    value: '85',
-                    label: '20:00'
-                }, {
-                    value: '86',
-                    label: '20:10'
-                }, {
-                    value: '87',
-                    label: '20:20'
-                }, {
-                    value: '88',
-                    label: '20:30'
-                }, {
-                    value: '89',
-                    label: '20:40'
-                }, {
-                    value: '90',
-                    label: '20:50'
-                },],
+                options1: [
+                    {
+                        value: '1',
+                        label: 'day1'
+                    }, {
+                        value: '2',
+                        label: 'day2'
+                    }, {
+                        value: '3',
+                        label: 'day3'
+                    }
+                ],
+                options2: [
+                    {
+                        value: '0',
+                        label: '6:00'
+                    }, {
+                        value: '1',
+                        label: '6:10'
+                    }, {
+                        value: '2',
+                        label: '6:20'
+                    }, {
+                        value: '3',
+                        label: '6:30'
+                    }, {
+                        value: '4',
+                        label: '6:40'
+                    }, {
+                        value: '5',
+                        label: '6:50'
+                    }, {
+                        value: '6',
+                        label: '7:00'
+                    }, {
+                        value: '7',
+                        label: '7:10'
+                    }, {
+                        value: '8',
+                        label: '7:20'
+                    }, {
+                        value: '9',
+                        label: '7:30'
+                    }, {
+                        value: '10',
+                        label: '7:40'
+                    }, {
+                        value: '11',
+                        label: '7:50'
+                    }, {
+                        value: '12',
+                        label: '8:00'
+                    }, {
+                        value: '13',
+                        label: '8:10'
+                    }, {
+                        value: '14',
+                        label: '8:20'
+                    }, {
+                        value: '15',
+                        label: '8:30'
+                    }, {
+                        value: '16',
+                        label: '8:40'
+                    }, {
+                        value: '17',
+                        label: '8:50'
+                    }, {
+                        value: '18',
+                        label: '9:00'
+                    }, {
+                        value: '19',
+                        label: '9:10'
+                    }, {
+                        value: '20',
+                        label: '9:20'
+                    }, {
+                        value: '21',
+                        label: '9:30'
+                    }, {
+                        value: '22',
+                        label: '9:40'
+                    }, {
+                        value: '23',
+                        label: '9:50'
+                    }, {
+                        value: '24',
+                        label: '10:00'
+                    }, {
+                        value: '25',
+                        label: '10:10'
+                    }, {
+                        value: '26',
+                        label: '10:20'
+                    }, {
+                        value: '27',
+                        label: '10:30'
+                    }, {
+                        value: '28',
+                        label: '10:40'
+                    }, {
+                        value: '29',
+                        label: '10:50'
+                    }, {
+                        value: '30',
+                        label: '11:00'
+                    }, {
+                        value: '31',
+                        label: '11:10'
+                    }, {
+                        value: '32',
+                        label: '11:20'
+                    }, {
+                        value: '33',
+                        label: '11:30'
+                    }, {
+                        value: '34',
+                        label: '11:40'
+                    }, {
+                        value: '35',
+                        label: '11:50'
+                    }, {
+                        value: '36',
+                        label: '12:00'
+                    }, {
+                        value: '37',
+                        label: '12:10'
+                    }, {
+                        value: '38',
+                        label: '12:20'
+                    }, {
+                        value: '39',
+                        label: '12:30'
+                    }, {
+                        value: '40',
+                        label: '12:40'
+                    }, {
+                        value: '41',
+                        label: '12:50'
+                    }, {
+                        value: '42',
+                        label: '13:00'
+                    }, {
+                        value: '43',
+                        label: '13:10'
+                    }, {
+                        value: '44',
+                        label: '13:20'
+                    }, {
+                        value: '45',
+                        label: '13:30'
+                    }, {
+                        value: '46',
+                        label: '13:40'
+                    }, {
+                        value: '47',
+                        label: '13:50'
+                    }, {
+                        value: '48',
+                        label: '14:00'
+                    }, {
+                        value: '49',
+                        label: '14:10'
+                    }, {
+                        value: '50',
+                        label: '14:20'
+                    }, {
+                        value: '51',
+                        label: '14:30'
+                    }, {
+                        value: '52',
+                        label: '14:40'
+                    }, {
+                        value: '53',
+                        label: '14:50'
+                    }, {
+                        value: '54',
+                        label: '15:00'
+                    }, {
+                        value: '55',
+                        label: '15:10'
+                    }, {
+                        value: '56',
+                        label: '15:20'
+                    }, {
+                        value: '57',
+                        label: '15:30'
+                    }, {
+                        value: '58',
+                        label: '15:40'
+                    }, {
+                        value: '59',
+                        label: '15:50'
+                    }, {
+                        value: '60',
+                        label: '16:00'
+                    }, {
+                        value: '61',
+                        label: '16:10'
+                    }, {
+                        value: '62',
+                        label: '16:20'
+                    }, {
+                        value: '63',
+                        label: '16:30'
+                    }, {
+                        value: '64',
+                        label: '16:40'
+                    }, {
+                        value: '65',
+                        label: '16:50'
+                    }, {
+                        value: '66',
+                        label: '17:00'
+                    }, {
+                        value: '67',
+                        label: '17:10'
+                    }, {
+                        value: '68',
+                        label: '17:20'
+                    }, {
+                        value: '69',
+                        label: '17:30'
+                    }, {
+                        value: '71',
+                        label: '17:40'
+                    }, {
+                        value: '72',
+                        label: '17:50'
+                    }, {
+                        value: '73',
+                        label: '18:00'
+                    }, {
+                        value: '74',
+                        label: '18:10'
+                    }, {
+                        value: '75',
+                        label: '18:20'
+                    }, {
+                        value: '76',
+                        label: '18:30'
+                    }, {
+                        value: '77',
+                        label: '18:40'
+                    }, {
+                        value: '78',
+                        label: '18:50'
+                    }, {
+                        value: '79',
+                        label: '19:00'
+                    }, {
+                        value: '80',
+                        label: '19:10'
+                    }, {
+                        value: '81',
+                        label: '19:20'
+                    }, {
+                        value: '82',
+                        label: '19:30'
+                    }, {
+                        value: '83',
+                        label: '19:40'
+                    }, {
+                        value: '84',
+                        label: '19:50'
+                    }, {
+                        value: '85',
+                        label: '20:00'
+                    }, {
+                        value: '86',
+                        label: '20:10'
+                    }, {
+                        value: '87',
+                        label: '20:20'
+                    }, {
+                        value: '88',
+                        label: '20:30'
+                    }, {
+                        value: '89',
+                        label: '20:40'
+                    }, {
+                        value: '90',
+                        label: '20:50'
+                    },],
             }
         },
-        watch:{
-            timepointvalue: function(newTimePoint, oldTimePoint){
-                console.log("dayval: "+this.dayvalue+"timpointval: "+this.timepointvalue);
+        watch: {
+            timepointvalue: function (newTimePoint, oldTimePoint) {
+                console.log("dayval: " + this.dayvalue ,"timpointval: " + this.timepointvalue);
                 this.showHeatMap(this.dayvalue, this.timepointvalue);
             },
-            dayvalue:function(newDay,oldDay){
+            dayvalue: function (newDay, oldDay) {
                 this.showHeatMap(this.dayvalue, this.timepointvalue);
             }
         },
@@ -4634,14 +4707,20 @@
             // renderFloorDetail(floorDetail);    // 显示各个区域
 
             // this.findRouteById(idForTest, 1);  // todo 把写死的第一天 改成动态的
+            // this.showHeatMap(1, 32);
         },
         methods: {
             showHeatMap: function (day, timePoint) {//传入日期
+                let startTime = baseTime + timePoint * timeInterval;
+                let endTime = startTime + timeInterval;
+                console.log(startTime, endTime);
                 this.$db.query(
-                    'select x, y, floor, time, count(*) cnt from `days` join sensors using(`sid`) where `day`=? and `time` between ? and ? group by `sid`',
-                    [day, baseTime + timePoint * timeInterval, baseTime + (timePoint + 1) * timeInterval],    // 取第timePoint个时间间隔内的人数
+                    'select sid, day, x, y, floor, time, count(*) cnt from `days` join sensors using(`sid`) where `day`=? and `time` between ? and ? group by `sid`',
+                    [day, startTime, endTime],    // 取第timePoint个时间间隔内的人数, 此处两个表达式的值单位都为秒
                     (err, res, field) => {
                         if (err) throw err;
+                        for (let i = 0; i < res.length; i++)
+                            res[i].time = baseTime + timePoint * timeInterval;
                         renderHeatMap(res);
                     }
                 )
