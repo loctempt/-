@@ -21,7 +21,7 @@ let connection = mysql.createConnection({   // 登录信息
     host: 'localhost',
     port: '3306',
     user: 'root',
-    password: 'mysql123',
+    password: 'leichuqi',
     database: 'vis'
 });
 connection.connect(function (err) {         // 连接数据库
