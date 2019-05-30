@@ -1,28 +1,61 @@
 <template>
     <div>
         <div class="select">
-            <el-select v-model="dayvalue" placeholder="请选择">
-                <el-option
-                        v-for="item in options1"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value">
-                </el-option>
-            </el-select>
-            <el-select v-model="timepointvalue" filterable placeholder="请选择">
-                <el-option
-                        v-for="item in options2"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value">
-                </el-option>
-            </el-select>
+            <el-row :gutter="20">
+                <el-col :span="4">
+                    <el-select v-model="dayValue" placeholder="选择日期">
+                        <el-option
+                                v-for="item in options1"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-col>
+            </el-row>
+            <el-row :gutter="20" style="margin-top: 10px">
+                <el-col :span="4">
+                    <el-select v-model="timePointValue" filterable placeholder="选择时刻">
+                        <el-option
+                                v-for="item in options2"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-col>
+                <el-col :span="4">
+                    <el-switch
+                            v-model="heatMapSwitch"
+                            active-color="#13ce66"
+                            inactive-color="#ff4949"
+                            active-text="热力图开"
+                            inactive-text="热力图关"
+                            style="position: relative; top: 8px;"
+                    ></el-switch>
+                </el-col>
+            </el-row>
+            <el-row :gutter="20" style="margin-top: 10px;">
+                <el-col :span="4">
+                    <el-input placeholder="人员ID"></el-input>
+                </el-col>
+                <el-col :span="4">
+                    <el-switch
+                            v-model="routesSwitch"
+                            active-color="#13ce66"
+                            inactive-color="#ff4949"
+                            active-text="路径开"
+                            inactive-text="路径关"
+                            style="position: relative; top: 8px;"
+                    ></el-switch>
+                </el-col>
+            </el-row>
             <el-dialog title="传感器人数统计" :visible.sync="dialogTableVisible">
                 传感器：{{sensorId}} <br>
                 总人数:{{countPersons}}
                 <el-table :data="idList">
-                    <el-table-column property="id" label="人员ID" ></el-table-column>
-                    <el-table-column property="time" label="时间" ></el-table-column>
+                    <el-table-column property="id" label="人员ID"></el-table-column>
+                    <el-table-column property="time" label="时间"></el-table-column>
                 </el-table>
             </el-dialog>
         </div>
@@ -153,7 +186,7 @@
     /**
      * 显示一个半透明遮罩，辅助热力图的显示
      */
-    function transparentLayer() {
+    function renderTransparentLayer() {
         let pos = [{'x': marginLeft, 'y': marginTop, 'floor': 1}, {
             'x': marginLeft,
             'y': (16 * rectWidth + 20) + marginTop,
@@ -187,15 +220,67 @@
     }
 
     /**
+     * 渲染图例，接收参数为x、y坐标以及渐变两端的颜色
+     */
+    function renderHeatMapLegend(x, y, rgbA, rgbB) {
+        let defs = d3.select('svg').append("defs");
+
+        let linearGradient = defs.append("linearGradient")
+            .attr("id", "linearColor")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "0%");
+
+        let stop1 = linearGradient.append("stop")
+            .attr("offset", "0%")
+            .style("stop-color", rgbA.toString());
+
+        let stop2 = linearGradient.append("stop")
+            .attr("offset", "100%")
+            .style("stop-color", rgbB.toString());
+
+        d3.select('svg')
+            .append('rect')
+            .attr('class', 'heatMapLegend')
+            .attr('x', x)
+            .attr('y', y)
+            .attr('width', 200)
+            .attr('height', 30)
+            .style('fill', "url(#" + linearGradient.attr("id") + ")");
+
+        let texts = ['1', '>=500'];     // 图例文字
+        d3.select('svg')
+            .selectAll('.legendText')
+            .data(texts)
+            .enter()
+            .append('text')
+            .attr('class', 'heatMapLegend')
+            .attr('x', function (d, i) {
+                if (i === 0) return x;
+                return x + 180;
+            })
+            .attr('y', function (d, i) {
+                return y + 45;
+            })
+            .text(function (d) {
+                return d;
+            })
+    }
+
+    /**
      * 渲染热力图
      * @param heatData 表示热力图的数据
+     * @param rgbA
+     * @param rgbB
      */
-    function renderHeatMap(heatData) {
-        console.log(heatData);
+    function renderHeatMap(heatData, rgbA, rgbB) {
+        // console.log(heatData);
+        console.log('渲染热力图...');
         let linear = d3.scaleLinear()
             .domain([0, 500])
             .range([0, 1]);
-        let compute = d3.interpolate(d3.rgb(166, 192, 254), d3.rgb(246, 128, 132));//红色渐变到绿色
+        let compute = d3.interpolate(rgbA, rgbB);
 
         removeHeatMap();
 
@@ -244,7 +329,7 @@
             [sid, day, time, time + 600],
             (err, res, field) => {
                 if (err) throw err;
-                console.log(sid, '在',time, '时刻有人数', cnt);
+                console.log(sid, '在', time, '时刻有人数', cnt);
                 vm.sensorId = sid;
                 vm.countPersons = cnt;
                 vm.dialogTableVisible = true;
@@ -271,8 +356,12 @@
     function destroyHeatMap() {
         removeHeatMap();
         d3.select('svg')
+            .selectAll('.heatMapLegend')
+            .remove();
+        d3.select('svg')
             .selectAll('.transparent')
             .remove();
+
     }
 
     /**
@@ -281,7 +370,13 @@
     function hideHeatMap() {
         d3.select('svg')
             .selectAll('.heat')
-            .attr('hidden')
+            .attr('hidden', true);
+        d3.select('svg')
+            .selectAll('.transparent')
+            .attr('hidden');
+        d3.select('svg')
+            .selectAll('.heatMapLegend')
+            .attr('hidden');
     }
 
     /**
@@ -290,7 +385,13 @@
     function displayHeatMap() {
         d3.select('svg')
             .selectAll('.heat')
-            .attr('hidden', null)
+            .attr('hidden', null);
+        d3.select('svg')
+            .selectAll('.transparent')
+            .attr('hidden', null);
+        d3.select('svg')
+            .selectAll('.heatMapLegend')
+            .attr('hidden', null);
     }
 
     // 在一楼显示人员路径
@@ -4401,6 +4502,8 @@
     const marginTop = 5;
     const timeInterval = 600;   // 600sec，即十分钟时间间隔
     const baseTime = 6 * 3600;
+    const linearGradientStartRgb = d3.rgb(166, 192, 254);   // 渐变起点颜色
+    const linearGradientEndRgb = d3.rgb(246, 211, 101);   // 渐变终点颜色
 
 
     //===============  for testing  =================
@@ -4413,8 +4516,8 @@
         name: "SvgMap",
         data() {
             return {
-                dayvalue: 1,
-                timepointvalue: "",
+                dayValue: null,
+                timePointValue: null,
                 options1: [
                     {
                         value: '1',
@@ -4703,16 +4806,29 @@
                 dialogTableVisible: false,
                 sensorId: null,
                 countPersons: 0,
-                idList: []
+                idList: [],
+                heatMapSwitch: false,
             }
         },
         watch: {
-            timepointvalue: function (newTimePoint, oldTimePoint) {
-                console.log("dayval: " + this.dayvalue ,"timpointval: " + this.timepointvalue);
-                this.showHeatMap(this.dayvalue, this.timepointvalue);
+            timePointValue: function (newTimePoint, oldTimePoint) {
+                console.log("dayval: " + this.dayValue, "timpointval: " + this.timePointValue);
+                if (this.heatMapSwitch)
+                    this.showHeatMap(this.dayValue, this.timePointValue);
             },
-            dayvalue: function (newDay, oldDay) {
-                this.showHeatMap(this.dayvalue, this.timepointvalue);
+            dayValue: function (newDay, oldDay) {
+                if (this.heatMapSwitch)
+                    this.showHeatMap(this.dayValue, this.timePointValue);
+            },
+            heatMapSwitch: function (newVal, oldVal) {
+                console.log('热力图开关：', newVal);
+                if (this.dayValue == null || this.timePointValue == null) {
+                    this.heatMapSwitch = false;
+                    this.$message('请先选择日期和时刻');
+                    return;
+                }
+                if (this.heatMapSwitch) this.initHeatMap();
+                else destroyHeatMap();
             }
         },
         mounted() {
@@ -4723,14 +4839,19 @@
 
             renderFloorMap(floor);        // 渲染地图底图
             renderFloorDetail(floorDetail);    // 显示各个区域
-            transparentLayer();
             // renderFloorDetail(floorDetail);    // 显示各个区域
 
             // this.findRouteById(idForTest, 1);  // todo 把写死的第一天 改成动态的
             // this.showHeatMap(1, 32);
         },
         methods: {
-            showHeatMap: function (day, timePoint) {//传入日期
+            initHeatMap: function () {
+                renderTransparentLayer();
+                renderHeatMapLegend(marginLeft + 30 * rectWidth + 20, marginTop, linearGradientStartRgb, linearGradientEndRgb);
+                this.showHeatMap();
+            },
+            showHeatMap: function () {//传入日期
+                let day = this.dayValue, timePoint = this.timePointValue;
                 let startTime = baseTime + timePoint * timeInterval;
                 let endTime = startTime + timeInterval;
                 console.log(startTime, endTime);
@@ -4741,7 +4862,8 @@
                         if (err) throw err;
                         for (let i = 0; i < res.length; i++)
                             res[i].time = baseTime + timePoint * timeInterval;
-                        renderHeatMap(res);
+                        if (this.heatMapSwitch)
+                            renderHeatMap(res, linearGradientStartRgb, linearGradientEndRgb);
                     }
                 )
             },

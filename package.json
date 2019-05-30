@@ -54,14 +54,14 @@
     "axios": "^0.18.0",
     "d3": "^5.9.2",
     "echarts": "latest",
+    "element-ui": "^2.9.0",
     "mongodb": "latest",
+    "mysql": "latest",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",
     "vuex": "^3.0.1",
-    "vuex-electron": "^1.0.0",
-    "mysql": "latest",
-    "element-ui": "latest"
+    "vuex-electron": "^1.0.0"
   },
   "devDependencies": {
     "ajv": "^6.5.0",
