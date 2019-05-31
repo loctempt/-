@@ -2,7 +2,7 @@
     <div>
         <el-row :gutter="20">
             <el-col :span="4">
-                <el-select v-model="dayValue" placeholder="选择日期" :disabled="selectionDisabled">
+                <el-select v-model="dayValue" placeholder="选择日期">
                     <el-option
                             v-for="item in options1"
                             :key="item.value"
@@ -12,23 +12,7 @@
                 </el-select>
             </el-col>
         </el-row>
-        <div>
-            <div style="margin: 10px 0;"></div>
-            <div style="display: inline-block; margin-right: 20px">
-                入口：
-                <el-checkbox-group v-model="checkedEntranceList">
-                    <el-checkbox v-for="sid in entranceList" :label="sid" :key="sid">{{sid}}</el-checkbox>
-                </el-checkbox-group>
-            </div>
-            <div style="display: inline-block; margin: 0 40px">
-                出口：
-                <el-checkbox-group v-model="checkedExitList">
-                    <el-checkbox v-for="sid in exitList" :label="sid" :key="sid">{{sid}}</el-checkbox>
-                </el-checkbox-group>
-            </div>
-            <el-button @click="handleCheckedListChange">更新</el-button>
-        </div>
-        <div id="dual_line" style="width: 1200px; height: 600px; margin-top: 10px"></div>
+        <div id="dual_line" style="width: 1200px; height: 1000px; margin-top: 10px"></div>
     </div>
 </template>
 
@@ -50,8 +34,11 @@
             }
         },
         legend: {
-            data: ['入场人数', '出场人数'],
-            x: 'left'
+            data: ['11300入', '11502入', '11504入', '11507入', '10019出', '11505出', '11515出', '11517出', '总入场人数', '总出场人数'],
+            orient: 'vertical',
+            right: 10,
+            top: 20,
+            bottom: 20
         },
         axisPointer: {
             link: {xAxisIndex: 'all'}
@@ -74,11 +61,11 @@
         ],
         grid: [{
             left: 50,
-            right: 50,
+            right: 120,
             height: '35%'
         }, {
             left: 50,
-            right: 50,
+            right: 120,
             top: '55%',
             height: '35%'
         }],
@@ -113,14 +100,87 @@
         ],
         series: [
             {
-                name: '入场人数',
+                name: '11300入',
+                type: 'line',
+                symbolSize: 4,
+                hoverAnimation: false,
+                data: [],
+                lineStyle: {opacity: 0.5}
+            },
+            {
+                name: '11502入',
+                type: 'line',
+                symbolSize: 4,
+                hoverAnimation: false,
+                data: [],
+                lineStyle: {opacity: 0.5}
+            },
+            {
+                name: '11504入',
+                type: 'line',
+                symbolSize: 4,
+                hoverAnimation: false,
+                data: [],
+                lineStyle: {opacity: 0.5}
+            },
+            {
+                name: '11507入',
+                type: 'line',
+                symbolSize: 4,
+                hoverAnimation: false,
+                data: [],
+                lineStyle: {opacity: 0.5}
+            },
+
+            {
+                name: '10019出',
+                type: 'line',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                symbolSize: 4,
+                hoverAnimation: false,
+                data: [],
+                lineStyle: {opacity: 0.5}
+            },
+            {
+                name: '11505出',
+                type: 'line',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                symbolSize: 4,
+                hoverAnimation: false,
+                data: [],
+                lineStyle: {opacity: 0.5}
+            },
+            {
+                name: '11515出',
+                type: 'line',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                symbolSize: 4,
+                hoverAnimation: false,
+                data: [],
+                lineStyle: {opacity: 0.5}
+            },
+            {
+                name: '11517出',
+                type: 'line',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                symbolSize: 4,
+                hoverAnimation: false,
+                data: [],
+                lineStyle: {opacity: 0.5}
+            },
+            {
+                name: '总入场人数',
                 type: 'line',
                 symbolSize: 8,
                 hoverAnimation: false,
                 data: []
             },
             {
-                name: '出场人数',
+                name: '总出场人数',
                 type: 'line',
                 xAxisIndex: 1,
                 yAxisIndex: 1,
@@ -136,7 +196,7 @@
             return {
                 myChart: null,
                 dayValue: null,
-                tmpOptions1: [
+                options1: [
                     {
                         value: '1',
                         label: 'day1'
@@ -148,13 +208,7 @@
                         label: 'day3'
                     }
                 ],
-                entranceData: [[], [], [], []],     // 子数组个数为4，便于从1开始计算下标，从而与取值范围1、2、3的dayValue对应
-                departureData: [[], [], [], []],    // 子数组个数为4，便于从1开始计算下标，从而与取值范围1、2、3的dayValue对应
-                chartReady: 0,                      // 用来表示查询状态，0为初态——无数据；6为末态——数据齐全
-                checkedEntranceList: [11300, 11502, 11504, 11507],  // 默认入口全选中
-                checkedExitList: [10019, 11505, 11515, 11517],      // 默认出口全选中
-                entranceList: [11300, 11502, 11504, 11507],         // 入口候选列表
-                exitList: [10019, 11505, 11515, 11517]              // 出口候选列表
+                gateReference: [11300, 11502, 11504, 11507, 10019, 11505, 11515, 11517],    // sid与数组位置的映射表
             }
         },
         mounted() {
@@ -162,63 +216,44 @@
             this.myChart = echarts.init(document.getElementById('dual_line'));  // 在#dual_line中初始化图像
             option.xAxis[0].data = option.xAxis[1].data = util.timeDataGen();   // 设置坐标轴文字
             this.myChart.setOption(option);                                     // 设置初始数据，刷新图像
-            this.getChartData();                                                // 获取统计数据
         },
         watch: {
             dayValue: function () {
-                option.series[0].data = this.entranceData[this.dayValue];
-                option.series[1].data = this.departureData[this.dayValue];
-                this.myChart.setOption(option);
+                this.getStatisticData(this.dayValue);   // 日期选项改变时从数据库查询元统计数据
             },
-        },
-        computed: {
-            selectionDisabled: function () {
-                return parseInt(this.chartReady / 2) === 0;
-            },
-            options1: function () {
-                if (this.chartReady === 6) console.log('出入场数据读取完成');
-                let options = [];
-                for (let opt = 0; opt < parseInt(this.chartReady / 2); opt++)
-                    options.push(this.tmpOptions1[opt]);    // 从数据库中取回哪些天的数据就令这些天可选
-                return options;
-            }
         },
         methods: {
-            getChartData() {
-                for (let day = 1; day <= 3; day++) {
-                    this.getEntranceCount(day);    // 查询入场人数
-                    this.getDepartureCount(day);   // 查询出场人数
-                }
-            },
-            handleCheckedListChange() {
-                this.chartReady = 0;
-                this.dayValue = null;
-                this.entranceData = [[], [], [], []];
-                this.departureData = [[], [], [], []];
-                this.getChartData();
-            },
-            getEntranceCount(day) {
+            getStatisticData(day) {
+                console.log('获取统计数据');
                 this.$db.query(
-                    "select `time` from days where `day` = ? and `sid` in (?) order by `time`",
-                    [day, (this.checkedEntranceList.length === 0 ? [0] : this.checkedEntranceList)],
+                    "select * from `ent_dep` where `day` = ? order by `time`;",
+                    [day],
                     (err, timeArr, field) => {
                         if (err) throw err;
-                        this.entranceData[day] = util.getTimePointArray(timeArr);   // 将原始数据转化为时间点数组
-                        this.chartReady++;                                          // 查到数据后更新计数器
+                        let statisticData = [[], [], [], [], [], [], [], [], [], []];   // 用来保存十个91元素的子数组
+                        for (let timePoint = 0; timePoint <= 90; timePoint++) {         // 遍历91个时间点
+                            let tmpData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];               // 某时间点每个传感器范围内的人数计数器
+                            let timeIdx = util.upperBound(timeArr, timePoint);          // 搜索大于等于当前时间点的第一个时刻
+                            if (timeIdx !== -1) {                                       // 找到大于等于当前时间点的第一个时刻
+                                for (; timeIdx < timeArr.length; timeIdx++) {           // 统计10分钟内所有的入场人数
+                                    if (util.isTimeValid(timePoint, timeArr[timeIdx])) {// 遍历到的时间与timePoint差距小于10分钟，计数器加一
+                                        let sid = timeArr[timeIdx].sid;                 // 暂存一条记录中的sid
+                                        let sidIndex = this.gateReference.indexOf(sid); // 查找sid在tmpData中对应的下标
+                                        tmpData[sidIndex]++;                     // 对应传感器的计数
+                                        if (sidIndex < 4) tmpData[8]++;          // 入场总计
+                                        else tmpData[9]++;                       // 离场总计
+                                    } else break;
+                                }
+                            }
+                            for (let tmpDataIdx = 0; tmpDataIdx < tmpData.length; tmpDataIdx++)
+                                statisticData[tmpDataIdx].push(tmpData[tmpDataIdx]);    // 将本轮遍历的结果压入statisticData的子数组
+                        }
+                        for (let statisticDataIdx = 0; statisticDataIdx < statisticData.length; statisticDataIdx++)
+                            option.series[statisticDataIdx].data = statisticData[statisticDataIdx]; // 按映射关系设置图表数据
+                        this.myChart.setOption(option); // 显示图像
                     }
                 );
             },
-            getDepartureCount(day) {
-                this.$db.query(
-                    "select `time` from days where `day` = ? and `sid` in (?) order by `time`",
-                    [day, (this.checkedExitList.length === 0 ? [0] : this.checkedExitList)],
-                    (err, timeArr, field) => {
-                        if (err) throw err;
-                        this.departureData[day] = util.getTimePointArray(timeArr);  // 将原始数据转化为时间点数组
-                        this.chartReady++;                                          // 查到数据后更新计数器
-                    }
-                );
-            }
         }
     }
 </script>
