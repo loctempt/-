@@ -72,7 +72,7 @@
     let d3 = require('d3');
     let db = require('../database');
     let util = require('../util');
-    import Floor from '../floor and detail';
+    import StaticData from '../static data';
 
     function renderFloorMap(floor) {
         d3.select('svg')
@@ -503,8 +503,8 @@
             render();       // 在#rangeSensorFigure存在时可以直接画图
     }
 
-    let floor = Floor.floor;
-    let floorDetail = Floor.floorDetail;
+    let floor = StaticData.floor;
+    let floorDetail = StaticData.floorDetail;
     let rangeSensorFigureOption = {
         title: {
             text: '范围统计',
@@ -581,279 +581,7 @@
                         label: 'day3'
                     }
                 ],
-                options2: [
-                    {
-                        value: '0',
-                        label: '6:00'
-                    }, {
-                        value: '1',
-                        label: '6:10'
-                    }, {
-                        value: '2',
-                        label: '6:20'
-                    }, {
-                        value: '3',
-                        label: '6:30'
-                    }, {
-                        value: '4',
-                        label: '6:40'
-                    }, {
-                        value: '5',
-                        label: '6:50'
-                    }, {
-                        value: '6',
-                        label: '7:00'
-                    }, {
-                        value: '7',
-                        label: '7:10'
-                    }, {
-                        value: '8',
-                        label: '7:20'
-                    }, {
-                        value: '9',
-                        label: '7:30'
-                    }, {
-                        value: '10',
-                        label: '7:40'
-                    }, {
-                        value: '11',
-                        label: '7:50'
-                    }, {
-                        value: '12',
-                        label: '8:00'
-                    }, {
-                        value: '13',
-                        label: '8:10'
-                    }, {
-                        value: '14',
-                        label: '8:20'
-                    }, {
-                        value: '15',
-                        label: '8:30'
-                    }, {
-                        value: '16',
-                        label: '8:40'
-                    }, {
-                        value: '17',
-                        label: '8:50'
-                    }, {
-                        value: '18',
-                        label: '9:00'
-                    }, {
-                        value: '19',
-                        label: '9:10'
-                    }, {
-                        value: '20',
-                        label: '9:20'
-                    }, {
-                        value: '21',
-                        label: '9:30'
-                    }, {
-                        value: '22',
-                        label: '9:40'
-                    }, {
-                        value: '23',
-                        label: '9:50'
-                    }, {
-                        value: '24',
-                        label: '10:00'
-                    }, {
-                        value: '25',
-                        label: '10:10'
-                    }, {
-                        value: '26',
-                        label: '10:20'
-                    }, {
-                        value: '27',
-                        label: '10:30'
-                    }, {
-                        value: '28',
-                        label: '10:40'
-                    }, {
-                        value: '29',
-                        label: '10:50'
-                    }, {
-                        value: '30',
-                        label: '11:00'
-                    }, {
-                        value: '31',
-                        label: '11:10'
-                    }, {
-                        value: '32',
-                        label: '11:20'
-                    }, {
-                        value: '33',
-                        label: '11:30'
-                    }, {
-                        value: '34',
-                        label: '11:40'
-                    }, {
-                        value: '35',
-                        label: '11:50'
-                    }, {
-                        value: '36',
-                        label: '12:00'
-                    }, {
-                        value: '37',
-                        label: '12:10'
-                    }, {
-                        value: '38',
-                        label: '12:20'
-                    }, {
-                        value: '39',
-                        label: '12:30'
-                    }, {
-                        value: '40',
-                        label: '12:40'
-                    }, {
-                        value: '41',
-                        label: '12:50'
-                    }, {
-                        value: '42',
-                        label: '13:00'
-                    }, {
-                        value: '43',
-                        label: '13:10'
-                    }, {
-                        value: '44',
-                        label: '13:20'
-                    }, {
-                        value: '45',
-                        label: '13:30'
-                    }, {
-                        value: '46',
-                        label: '13:40'
-                    }, {
-                        value: '47',
-                        label: '13:50'
-                    }, {
-                        value: '48',
-                        label: '14:00'
-                    }, {
-                        value: '49',
-                        label: '14:10'
-                    }, {
-                        value: '50',
-                        label: '14:20'
-                    }, {
-                        value: '51',
-                        label: '14:30'
-                    }, {
-                        value: '52',
-                        label: '14:40'
-                    }, {
-                        value: '53',
-                        label: '14:50'
-                    }, {
-                        value: '54',
-                        label: '15:00'
-                    }, {
-                        value: '55',
-                        label: '15:10'
-                    }, {
-                        value: '56',
-                        label: '15:20'
-                    }, {
-                        value: '57',
-                        label: '15:30'
-                    }, {
-                        value: '58',
-                        label: '15:40'
-                    }, {
-                        value: '59',
-                        label: '15:50'
-                    }, {
-                        value: '60',
-                        label: '16:00'
-                    }, {
-                        value: '61',
-                        label: '16:10'
-                    }, {
-                        value: '62',
-                        label: '16:20'
-                    }, {
-                        value: '63',
-                        label: '16:30'
-                    }, {
-                        value: '64',
-                        label: '16:40'
-                    }, {
-                        value: '65',
-                        label: '16:50'
-                    }, {
-                        value: '66',
-                        label: '17:00'
-                    }, {
-                        value: '67',
-                        label: '17:10'
-                    }, {
-                        value: '68',
-                        label: '17:20'
-                    }, {
-                        value: '69',
-                        label: '17:30'
-                    }, {
-                        value: '71',
-                        label: '17:40'
-                    }, {
-                        value: '72',
-                        label: '17:50'
-                    }, {
-                        value: '73',
-                        label: '18:00'
-                    }, {
-                        value: '74',
-                        label: '18:10'
-                    }, {
-                        value: '75',
-                        label: '18:20'
-                    }, {
-                        value: '76',
-                        label: '18:30'
-                    }, {
-                        value: '77',
-                        label: '18:40'
-                    }, {
-                        value: '78',
-                        label: '18:50'
-                    }, {
-                        value: '79',
-                        label: '19:00'
-                    }, {
-                        value: '80',
-                        label: '19:10'
-                    }, {
-                        value: '81',
-                        label: '19:20'
-                    }, {
-                        value: '82',
-                        label: '19:30'
-                    }, {
-                        value: '83',
-                        label: '19:40'
-                    }, {
-                        value: '84',
-                        label: '19:50'
-                    }, {
-                        value: '85',
-                        label: '20:00'
-                    }, {
-                        value: '86',
-                        label: '20:10'
-                    }, {
-                        value: '87',
-                        label: '20:20'
-                    }, {
-                        value: '88',
-                        label: '20:30'
-                    }, {
-                        value: '89',
-                        label: '20:40'
-                    }, {
-                        value: '90',
-                        label: '20:50'
-                    },
-                ],
+                options2: StaticData.options2,
                 personIdOptions:[],
                 personIdValues:[],
                 personIdList:[],
@@ -998,7 +726,6 @@
             }
         }
     }
-    //    todo 增加删除路径的函数
 </script>
 
 <style scoped>
