@@ -24,8 +24,8 @@
                 </el-col>
                 <el-col :span="4">
                     <!--<el-input placeholder="人员ID"></el-input>-->
-                    <el-select v-model="personValue"  :disabled="disableIdSelect"
-                               multiple filterable remote reserve-keyword   :remote-method="remoteMethod"
+                    <el-select v-model="personValue" :disabled="disableIdSelect"
+                               multiple filterable remote reserve-keyword :remote-method="remoteMethod"
                                :loading="loading" placeholder="请选择人员id">
                         <el-option
                                 v-for="item in personIdOptions"
@@ -277,10 +277,11 @@
                 return d;
             })
     }
+
     /**
      * 获取每日参会id列表
      */
-    function getPersonList(day){
+    function getPersonList(day) {
         db.query(
             'select `id` from `persons` where `day`= ? ',
             [day],
@@ -288,13 +289,13 @@
                 if (err) throw err;
                 vm.idList = res;
                 vm.personIdList = vm.idList.map(item => {//将idList映射成personIdList
-                    return { value: item.id, label: item.id }; // 该数组中 存键值对{value: label: }
+                    return {value: item.id, label: item.id}; // 该数组中 存键值对{value: label: }
                 });
                 // console.log(res);
             }
-
         )
     }
+
     /**
      * 渲染热力图
      * @param heatData 表示热力图的数据
@@ -422,10 +423,10 @@
     }
 
     // 在一楼显示人员路径
-    function renderRoutes(route, id = 1,idIdx) {//idIdx显示数组下标
+    function renderRoutes(route, id = 1, idIdx) {//idIdx显示数组下标
         let threshold = d3.scaleThreshold()   //不同id显示不同颜色的路径  设置threshold阈值比例尺
-            .domain([1,2,3,4,5,6,7,8,9,10])
-            .range(["60,179,113","238,180,34","238,180,180","238,99,99","72,118,255","238,174,238","159,182,205","205,181,205","162,181,205","238,154,73"]);
+            .domain([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+            .range(["60,179,113", "238,180,34", "238,180,180", "238,99,99", "72,118,255", "238,174,238", "159,182,205", "205,181,205", "162,181,205", "238,154,73"]);
         // let compute = d3.interpolate(rgbA, rgbB);
         console.log(idIdx);
         d3.select('svg')
@@ -433,7 +434,7 @@
             .data(route)
             .enter()
             .append('rect')
-            .attr('class', 'route'+id)
+            .attr('class', 'route' + id)
             .attr('y', function (d) {
                 if (d.floor === 1)
                     return d.x * (rectWidth) + marginTop;
@@ -462,7 +463,7 @@
                 // return 'rgba(' + (23 - parseInt(i / route.length * (23))) + ', '
                 //     + (195 - parseInt(i / route.length * (195))) + ', '
                 //     + (41 - parseInt(i / route.length * (41))) + ', 0.5)'
-                return 'rgba('+threshold(idIdx)+',0.7)';
+                return 'rgba(' + threshold(idIdx) + ',0.7)';
             })
     }
 
@@ -565,10 +566,10 @@
                 dayValue: null,
                 timePointValue: null,
                 loading: false,
-                personValue:[],
-                routeValue:null,
-                disableTimeSelect:true,
-                disableIdSelect:false,
+                personValue: [],
+                routeValue: null,
+                disableTimeSelect: true,
+                disableIdSelect: false,
                 options1: [
                     {
                         value: '1',
@@ -582,9 +583,9 @@
                     }
                 ],
                 options2: StaticData.options2,
-                personIdOptions:[],
-                personIdValues:[],
-                personIdList:[],
+                personIdOptions: [],
+                personIdValues: [],
+                personIdList: [],
                 singleSensorTableVisible: false,
                 rangeSensorFigureVisible: false,
                 rangeName: "",
@@ -607,25 +608,25 @@
             },
             heatMapSwitch: function (newVal, oldVal) {
                 console.log('热力图开关：', newVal);
-                if(this.heatMapSwitch){             //开启热力图开关
-                    this.disableIdSelect=true;  //关闭人员筛选框
-                    this.disableTimeSelect=false;   //开启日期筛选框
+                if (this.heatMapSwitch) {             //开启热力图开关
+                    this.disableIdSelect = true;  //关闭人员筛选框
+                    this.disableTimeSelect = false;   //开启日期筛选框
                     this.initHeatMap();             //初始渲染 热力图
                     this.removeRoute(this.personValue); //把地图上的人员路径删去
-                }else{
-                    this.disableTimeSelect=true;
-                    this.disableIdSelect=false;
+                } else {
+                    this.disableTimeSelect = true;
+                    this.disableIdSelect = false;
                     destroyHeatMap();//删去热力图
-                    this.findRouteById(this.personValue,this.dayValue);//重新渲染id筛选框中id的路径图
+                    this.findRouteById(this.personValue, this.dayValue);//重新渲染id筛选框中id的路径图
                 }
             },
-            personValue:function(newRouteValue,oldRouteValue){
+            personValue: function (newRouteValue, oldRouteValue) {
                 if (!this.heatMapSwitch) {  //开启路径图
                     let filter1 = newRouteValue.filter(item => {  //filter1: 在每一次添加id时 选出新增的id值
                         return oldRouteValue.indexOf(item) === -1;
                     });
                     // console.log(filter1);
-                    this.findRouteById(filter1, this.dayValue,this.personValue.indexOf(filter1[0]));//渲染该id的路径 并传入id在personValue数组中的index：确定路径颜色
+                    this.findRouteById(filter1, this.dayValue, this.personValue.indexOf(filter1[0]));//渲染该id的路径 并传入id在personValue数组中的index：确定路径颜色
                     let filter2 = oldRouteValue.filter(item => {//filter2: 在每一次删除id时 得到删去的id值
                         return newRouteValue.indexOf(item) === -1;
                     });
@@ -633,7 +634,7 @@
                     console.log(filter2);
                 }
             },
-    },
+        },
         mounted() {
             vm = this;
             let svg = d3.select('svg')         // 设置svg元素
@@ -649,9 +650,9 @@
             /*
             * 删除用户的路径
              */
-            removeRoute(ids){
-                for(let i=0;i<ids.length;i++)
-                    d3.selectAll('.route'+ids[i])
+            removeRoute(ids) {
+                for (let i = 0; i < ids.length; i++)
+                    d3.selectAll('.route' + ids[i])
                         .remove();
             },
             /*
@@ -702,7 +703,7 @@
                 )
             },
 
-            findRouteById: function (ids, day,colorNum) {    // 传入人员id和日期 以及 id在数组中的位置，显示人员行走路径
+            findRouteById: function (ids, day, colorNum) {    // 传入人员id和日期 以及 id在数组中的位置，显示人员行走路径
                 for (let idIdx = 0; idIdx < ids.length; idIdx++) {
                     this.$db.query(
                         'select * from days a join sensors using(`sid`) where `id`=? and `day`=? order by `time`',
@@ -715,10 +716,10 @@
                             for (let resIdx = res.length - 1; resIdx >= 0; resIdx--) {  // 计算每个路径点的停留时长
                                 res[resIdx].duration = res[resIdx].time - res[0].time;
                             }
-                            if(colorNum===null)
-                                renderRoutes(res,ids[idIdx],idIdx); // 获得路径后显示出来
+                            if (colorNum === undefined)
+                                renderRoutes(res, ids[idIdx], idIdx); // 获得路径后显示出来
                             else
-                                renderRoutes(res,ids[idIdx],colorNum);
+                                renderRoutes(res, ids[idIdx], colorNum);
                             console.log(idIdx);
                         }
                     )
