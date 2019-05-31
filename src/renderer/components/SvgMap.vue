@@ -12,10 +12,8 @@
                         </el-option>
                     </el-select>
                 </el-col>
-            </el-row>
-            <el-row :gutter="20" style="margin-top: 10px">
                 <el-col :span="4">
-                    <el-select v-model="timePointValue" filterable placeholder="选择时刻">
+                    <el-select v-model="timePointValue" :disabled="disableTimeSelect" filterable placeholder="选择时刻">
                         <el-option
                                 v-for="item in options2"
                                 :key="item.value"
@@ -25,31 +23,32 @@
                     </el-select>
                 </el-col>
                 <el-col :span="4">
+                    <!--<el-input placeholder="人员ID"></el-input>-->
+                    <el-select v-model="personValue"  :disabled="disableIdSelect"
+                               multiple filterable remote reserve-keyword   :remote-method="remoteMethod"
+                               :loading="loading" placeholder="请选择人员id">
+                        <el-option
+                                v-for="item in personIdOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-col>
+
+                <el-col :span="4">
                     <el-switch
                             v-model="heatMapSwitch"
                             active-color="#13ce66"
                             inactive-color="#ff4949"
-                            active-text="热力图开"
-                            inactive-text="热力图关"
+                            active-text="热力图"
+                            inactive-text="路径图"
                             style="position: relative; top: 8px;"
                     ></el-switch>
                 </el-col>
             </el-row>
-            <el-row :gutter="20" style="margin-top: 10px;">
-                <el-col :span="4">
-                    <el-input placeholder="人员ID"></el-input>
-                </el-col>
-                <el-col :span="4">
-                    <el-switch
-                            v-model="routesSwitch"
-                            active-color="#13ce66"
-                            inactive-color="#ff4949"
-                            active-text="路径开"
-                            inactive-text="路径关"
-                            style="position: relative; top: 8px;"
-                    ></el-switch>
-                </el-col>
-            </el-row>
+
+
             <el-dialog title="传感器人数统计" :visible="singleSensorTableVisible">
                 传感器：{{sensorId}} <br>
                 总人数:{{countPersons}}
@@ -277,7 +276,21 @@
                 return d;
             })
     }
+    function getPersonList(day){
+        db.query(
+            'select `id` from `persons` where `day`= ? ',
+            [day],
+            (err, res, field) => {
+                if (err) throw err;
+                vm.idList = res;
+                vm.personIdList = vm.idList.map(item => {
+                    return { value: item.id, label: item.id };
+                });
+                console.log(res);
+            }
 
+        )
+    }
     /**
      * 渲染热力图
      * @param heatData 表示热力图的数据
@@ -285,7 +298,7 @@
      * @param rgbB
      */
     function renderHeatMap(heatData, rgbA, rgbB) {
-        // console.log(heatData);
+        console.log(heatData);
         console.log('渲染热力图...');
         let linear = d3.scaleLinear()
             .domain([0, 500])
@@ -405,13 +418,18 @@
     }
 
     // 在一楼显示人员路径
-    function renderRoutes(route, no = 1) {
+    function renderRoutes(route, id = 1,idIdx) {//idIdx显示数组下标
+        let threshold = d3.scaleThreshold()
+            .domain([1,2,3,4,5,6,7,8,9,10])
+            .range(["60,179,113","238,180,34","238,180,180","238,99,99","72,118,255","238,174,238","159,182,205","205,181,205","162,181,205","238,154,73"]);
+        // let compute = d3.interpolate(rgbA, rgbB);
+        console.log(idIdx);
         d3.select('svg')
-            .selectAll('.route' + no)
+            .selectAll('.route' + id)
             .data(route)
             .enter()
             .append('rect')
-            .attr('class', 'route')
+            .attr('class', 'route'+id)
             .attr('y', function (d) {
                 if (d.floor === 1)
                     return d.x * (rectWidth) + marginTop;
@@ -437,9 +455,10 @@
                 return rectWidth;
             })
             .attr('fill', function (d, i) { // 颜色由浅至深
-                return 'rgba(' + (23 - parseInt(i / route.length * (23))) + ', '
-                    + (195 - parseInt(i / route.length * (195))) + ', '
-                    + (41 - parseInt(i / route.length * (41))) + ', 0.9)'
+                // return 'rgba(' + (23 - parseInt(i / route.length * (23))) + ', '
+                //     + (195 - parseInt(i / route.length * (195))) + ', '
+                //     + (41 - parseInt(i / route.length * (41))) + ', 0.5)'
+                return 'rgba('+threshold(idIdx)+',0.7)';
             })
     }
 
@@ -4599,6 +4618,11 @@
             return {
                 dayValue: null,
                 timePointValue: null,
+                loading: false,
+                personValue:null,
+                routeValue:null,
+                disableTimeSelect:true,
+                disableIdSelect:false,
                 options1: [
                     {
                         value: '1',
@@ -4884,6 +4908,9 @@
                         label: '20:50'
                     },
                 ],
+                personIdOptions:[],
+                personIdValues:[],
+                personIdList:[],
                 singleSensorTableVisible: false,
                 rangeSensorFigureVisible: false,
                 rangeName: "",
@@ -4891,7 +4918,6 @@
                 countPersons: 0,
                 idList: [],
                 heatMapSwitch: false,
-                routesSwitch: false,
             }
         },
         watch: {
@@ -4901,20 +4927,44 @@
                     this.showHeatMap(this.dayValue, this.timePointValue);
             },
             dayValue: function (newDay, oldDay) {
+                getPersonList(this.dayValue);
                 if (this.heatMapSwitch)
                     this.showHeatMap(this.dayValue, this.timePointValue);
             },
             heatMapSwitch: function (newVal, oldVal) {
                 console.log('热力图开关：', newVal);
-                if (this.dayValue == null || this.timePointValue == null) {
-                    this.heatMapSwitch = false;
-                    this.$message('请先选择日期和时刻');
-                    return;
+                // if (this.dayValue == null || this.timePointValue == null) {
+                //     this.heatMapSwitch = false;
+                //     this.$message('请先选择日期和时刻');
+                //     return;
+                // }
+                if(this.heatMapSwitch){
+                    this.disableIdSelect=true;
+                    this.disableTimeSelect=false;
+                    this.initHeatMap();
+                    this.removeRoute(this.personValue);
+                }else{
+                    this.disableTimeSelect=true;
+                    this.disableIdSelect=false;
+                    destroyHeatMap();
+                    this.findRouteById(this.personValue,this.dayValue);
                 }
-                if (this.heatMapSwitch) this.initHeatMap();
-                else destroyHeatMap();
-            }
-        },
+            },
+            personValue:function(newRouteValue,oldRouteValue){
+                if (!this.heatMapSwitch) {
+                    let filter1 = newRouteValue.filter(item => {
+                        return oldRouteValue.indexOf(item) === -1;
+                    });
+                    // console.log(filter1);
+                    this.findRouteById(filter1, this.dayValue,this.personValue.indexOf(filter1[0]));
+                    let filter2 = oldRouteValue.filter(item => {
+                        return newRouteValue.indexOf(item) === -1;
+                    });
+                    this.removeRoute(filter2);
+                    console.log(filter2);
+                }
+            },
+    },
         mounted() {
             vm = this;
             let svg = d3.select('svg')         // 设置svg元素
@@ -4924,11 +4974,29 @@
             renderFloorMap(floor);             // 渲染地图底图
             renderFloorDetail(floorDetail);    // 显示各个区域
             // renderFloorDetail(floorDetail);    // 显示各个区域
-
-            // this.findRouteById(idForTest, 1);  // todo 把写死的第一天 改成动态的
             // this.showHeatMap(1, 32);
         },
         methods: {
+            removeRoute(ids){
+                for(let i=0;i<ids.length;i++)
+                    d3.selectAll('.route'+ids[i])
+                        .remove();
+            },
+            remoteMethod(query) {
+                if (query !== '') {
+                    this.loading = true;
+                    setTimeout(() => {
+                        this.loading = false;
+                        console.log(this.personIdList);
+                        this.personIdOptions = this.personIdList.filter(item => {
+                            return item.label.toString().indexOf(query) > -1;
+                        });
+                        // console.log(this.personIdOptions);
+                    }, 200);
+                } else {
+                    this.personIdOptions = [];
+                }
+            },
             initHeatMap: function () {
                 renderTransparentLayer();
                 renderHeatMapLegend(marginLeft + 30 * rectWidth + 20, marginTop, linearGradientStartRgb, linearGradientEndRgb);
@@ -4952,7 +5020,7 @@
                 )
             },
 
-            findRouteById: function (ids, day) {    // 传入人员id和日期，显示人员行走路径
+            findRouteById: function (ids, day,colorNum) {    // 传入人员id和日期，显示人员行走路径
                 for (let idIdx = 0; idIdx < ids.length; idIdx++) {
                     this.$db.query(
                         'select * from days a join sensors using(`sid`) where `id`=? and `day`=? order by `time`',
@@ -4965,7 +5033,11 @@
                             for (let resIdx = res.length - 1; resIdx >= 0; resIdx--) {  // 计算每个路径点的停留时长
                                 res[resIdx].duration = res[resIdx].time - res[0].time;
                             }
-                            renderRoutes(res); // 获得路径后显示出来
+                            if(colorNum===null)
+                                renderRoutes(res,ids[idIdx],idIdx); // 获得路径后显示出来
+                            else
+                                renderRoutes(res,ids[idIdx],colorNum);
+                            console.log(idIdx);
                         }
                     )
                 }
