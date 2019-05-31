@@ -2,6 +2,7 @@
     <div>
         <div class="select">
             <el-row :gutter="20">
+                <el-col :span="4">&nbsp</el-col>
                 <el-col :span="4">
                     <el-select v-model="dayValue" placeholder="选择日期">
                         <el-option
@@ -35,17 +36,17 @@
                         </el-option>
                     </el-select>
                 </el-col>
-
                 <el-col :span="4">
                     <el-switch
                             v-model="heatMapSwitch"
-                            active-color="#13ce66"
-                            inactive-color="#ff4949"
+                            active-color="#F5D368"
+                            inactive-color="#49AFFF"
                             active-text="热力图"
                             inactive-text="路径图"
                             style="position: relative; top: 8px;"
                     ></el-switch>
                 </el-col>
+                <el-col :span="4">&nbsp;</el-col>
             </el-row>
 
 
@@ -57,12 +58,14 @@
                     <el-table-column property="time" label="时间"></el-table-column>
                 </el-table>
             </el-dialog>
-            <el-dialog title="范围人数统计" :visible.sync="rangeSensorFigureVisible" width="80%">
+            <el-dialog title="范围人数统计" :visible.sync="rangeSensorFigureVisible" width="65%">
                 <!--                位置：{{rangeName}}-->
                 <div id="rangeSensorFigure" style="width: 1200px; height: 500px; margin-top: 10px"></div>
             </el-dialog>
         </div>
+        <div class="svgContainer">
         <svg></svg>
+        </div>
     </div>
 </template>
 
@@ -542,7 +545,7 @@
     let vm = null;
     let rangeSensorFigure = null;
 
-    const rectWidth = 40;   // 方块的边长
+    const rectWidth = 25;   // 方块的边长
     const strokeWidth = 1;  // 边框的宽度
     const strokeColor = "rgb(149, 149, 149)";
     const marginLeft = 10;
@@ -557,7 +560,7 @@
     const idForTest = [18473];
     //===============  for testing  =================
 
-    let svgWidth = 1800, svgHeight = 1400;
+    let svgWidth = 1010, svgHeight = 900;
 
     export default {
         name: "SvgMap",
@@ -730,5 +733,12 @@
 </script>
 
 <style scoped>
-
+    svg {
+        margin: 20px 0;
+    }
+    .svgContainer{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>

@@ -1,18 +1,20 @@
 <template>
-    <div>
-        <el-row :gutter="20">
-            <el-col :span="4">
-                <el-select v-model="dayValue" placeholder="选择日期">
-                    <el-option
-                            v-for="item in options1"
-                            :key="item.value"
-                            :label="item.label"
-                            :value="item.value">
-                    </el-option>
-                </el-select>
-            </el-col>
-        </el-row>
-        <div id="dual_line" style="width: 1200px; height: 1000px; margin-top: 10px"></div>
+    <div class="chartContainer">
+        <div>
+            <el-row :gutter="20">
+                <el-col :span="4">
+                    <el-select v-model="dayValue" placeholder="选择日期">
+                        <el-option
+                                v-for="item in options1"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-col>
+            </el-row>
+            <div id="dual_line" style="width: 1200px; height: 900px; margin-top: 10px"></div>
+        </div>
     </div>
 </template>
 
@@ -259,5 +261,10 @@
 </script>
 
 <style scoped>
-
+    .chartContainer {
+        padding-left: 10%;
+        /*display: flex;*/
+        /*align-items: center;*/
+        /*justify-content: center;*/
+    }
 </style>

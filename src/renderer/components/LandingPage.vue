@@ -41,21 +41,21 @@
     }
 
     #wrapper {
-        /*background:*/
-        /*radial-gradient(*/
-        /*ellipse at top left,*/
-        /*rgba(255, 255, 255, 1) 40%,*/
-        /*rgba(229, 229, 229, .9) 100%*/
-        /*);*/
-        height: 100vh;
-        padding: 60px 80px;
-        width: 100vw;
+        /*background: radial-gradient(*/
+        /*        ellipse at top left,*/
+        /*        rgba(255, 255, 255, 1) 40%,*/
+        /*        rgba(229, 229, 229, .9) 100%*/
+        /*) no-repeat fixed;*/
+        background: url("../assets/background.png") repeat fixed;
+        /*height: 100vh;*/
+        padding: 20px 80px;
+        /*width: 100vw;*/
     }
 
     #logo {
         height: auto;
         margin-bottom: 20px;
-        width: 420px;
+        width: 260px;
     }
 
     main {
