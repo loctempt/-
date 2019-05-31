@@ -49,7 +49,7 @@
             </el-row>
 
 
-            <el-dialog title="传感器人数统计" :visible="singleSensorTableVisible">
+            <el-dialog title="传感器人数统计" :visible.sync="singleSensorTableVisible">
                 传感器：{{sensorId}} <br>
                 总人数:{{countPersons}}
                 <el-table :data="idList">
