@@ -50,7 +50,7 @@
                     ></el-switch>
                 </el-col>
             </el-row>
-            <el-dialog title="传感器人数统计" :visible.sync="dialogTableVisible">
+            <el-dialog title="传感器人数统计" :visible="singleSensorTableVisible">
                 传感器：{{sensorId}} <br>
                 总人数:{{countPersons}}
                 <el-table :data="idList">
@@ -58,17 +58,21 @@
                     <el-table-column property="time" label="时间"></el-table-column>
                 </el-table>
             </el-dialog>
+            <el-dialog title="范围人数统计" :visible.sync="rangeSensorFigureVisible" width="80%">
+                <!--                位置：{{rangeName}}-->
+                <div id="rangeSensorFigure" style="width: 1200px; height: 500px; margin-top: 10px"></div>
+            </el-dialog>
         </div>
         <svg></svg>
     </div>
 </template>
 
 <script>
+    import echarts from "echarts";
+
     let d3 = require('d3');
     let db = require('../database');
     let util = require('../util');
-
-    let vm = null;
 
     function renderFloorMap(floor) {
         d3.select('svg')
@@ -126,6 +130,7 @@
             })
             .attr('stroke', 'black')        // 边框黑色
             .attr('stroke-width', 3)        // 边框线宽为3
+            .style('cursor', 'pointer')
             .attr('fill', function (d, i) { // 根据区域类型填充颜色
                 switch (d.type) {
                     case 'public area':
@@ -155,7 +160,12 @@
                                 return "rgba(249, 167, 13, 0.7)";
                         }
                     })
-            });
+            })
+            .on('click', function (d) {
+                console.log(d);
+                renderRangeSensorTable(d);
+            })
+        ;
         d3.select('svg')
             .selectAll('.detailText')
             .data(floorDetail)
@@ -431,6 +441,43 @@
                     + (195 - parseInt(i / route.length * (195))) + ', '
                     + (41 - parseInt(i / route.length * (41))) + ', 0.9)'
             })
+    }
+
+    /**
+     * 获取数据并显示范围人数统计图
+     * @param d 选择的区域数据
+     */
+    function renderRangeSensorTable(d) {
+        if (vm.dayValue == null) {
+            vm.$message('请先选择日期');  // 未选择日期时弹出提示
+            return;
+        }
+        vm.rangeSensorFigureVisible = true;
+        let render = function () {                                                          // 用于渲染图像
+            rangeSensorFigureOption.title.text = d.name;                                    // 设置图像标题
+            rangeSensorFigureOption.series[0].data = [];                                    // 初始化图像数据
+            for (let i = 0; i <= 90; i++) rangeSensorFigureOption.series[0].data.push(0);   // 初始化为0
+            rangeSensorFigure.setOption(rangeSensorFigureOption);                           // 刷新图像
+            console.log('计算', d.name, '统计数据');
+            db.query(
+                'select `time` from days join sensors using(`sid`) where `day` = ? and x between ? and ? and y between ? and ? order by `time`',
+                [vm.dayValue, d.x1, d.x2, d.y1, d.y2],
+                (err, timeArr, field) => {
+                    if (err) throw err;
+                    console.log('数据已获得');
+                    rangeSensorFigureOption.series[0].data = util.getTimePointArray(timeArr);   // 将原始数据转化为时间点数组
+                    rangeSensorFigure.setOption(rangeSensorFigureOption);                       // 刷新图像
+                }
+            )
+        };
+        if (document.getElementById('rangeSensorFigure') == null)   // 第一次显示对话框时等待100毫秒再实例化图像，避免在
+            setTimeout(function () {                                // 显示图像的div实例化前就进行图像的实例化
+                rangeSensorFigure = echarts.init(document.getElementById('rangeSensorFigure')); // 实例化图像
+                rangeSensorFigureOption.xAxis.data = util.timeDataGen();                        // 初始化图像坐标轴
+                render();   // 画图
+            }, 100);
+        else
+            render();       // 在#rangeSensorFigure存在时可以直接画图
     }
 
     let floor = [
@@ -4275,7 +4322,6 @@
             "floor": 2
         }
     ];
-
     let floorDetail = [
         {
             "name": "餐厅",
@@ -4494,6 +4540,41 @@
             "floor": 1
         }
     ];
+    let rangeSensorFigureOption = {
+        title: {
+            text: '范围统计',
+            x: 'center'
+        },
+        xAxis: {
+            type: 'category',
+            data: [],
+        },
+        yAxis: {
+            name: '人数（人）',
+            type: 'value',
+        },
+        series: [{
+            data: [],
+            type: 'line'
+        }],
+        dataZoom: [
+            {
+                type: 'slider',
+                show: true,
+                xAxisIndex: [0],
+                start: 1,
+                end: 100
+            },
+            {
+                type: 'inside',
+                xAxisIndex: [0],
+                start: 1,
+                end: 100
+            },
+        ]
+    };
+    let vm = null;
+    let rangeSensorFigure = null;
 
     const rectWidth = 40;   // 方块的边长
     const strokeWidth = 1;  // 边框的宽度
@@ -4503,7 +4584,7 @@
     const timeInterval = 600;   // 600sec，即十分钟时间间隔
     const baseTime = 6 * 3600;
     const linearGradientStartRgb = d3.rgb(166, 192, 254);   // 渐变起点颜色
-    const linearGradientEndRgb = d3.rgb(246, 211, 101);   // 渐变终点颜色
+    const linearGradientEndRgb = d3.rgb(246, 211, 101);     // 渐变终点颜色
 
 
     //===============  for testing  =================
@@ -4803,11 +4884,14 @@
                         label: '20:50'
                     },
                 ],
-                dialogTableVisible: false,
+                singleSensorTableVisible: false,
+                rangeSensorFigureVisible: false,
+                rangeName: "",
                 sensorId: null,
                 countPersons: 0,
                 idList: [],
                 heatMapSwitch: false,
+                routesSwitch: false,
             }
         },
         watch: {
@@ -4837,7 +4921,7 @@
                 .attr('width', svgWidth)       // 设置宽度
                 .attr('height', svgHeight);    // 设置高度
 
-            renderFloorMap(floor);        // 渲染地图底图
+            renderFloorMap(floor);             // 渲染地图底图
             renderFloorDetail(floorDetail);    // 显示各个区域
             // renderFloorDetail(floorDetail);    // 显示各个区域
 
@@ -4875,8 +4959,8 @@
                         [ids[idIdx], day],
                         (err, res, field) => {
                             if (err) throw err;
-                            for (let resIdx = 0; resIdx < res.length; resIdx++) {  // 遍历查出来的每条记录
-                                res[resIdx].duration = 0; // 将记录中有用的部分取出，
+                            for (let resIdx = 0; resIdx < res.length; resIdx++) {       // 遍历查出来的每条记录
+                                res[resIdx].duration = 0;                               // 将记录中有用的部分取出，
                             }
                             for (let resIdx = res.length - 1; resIdx >= 0; resIdx--) {  // 计算每个路径点的停留时长
                                 res[resIdx].duration = res[resIdx].time - res[0].time;
@@ -4885,39 +4969,6 @@
                         }
                     )
                 }
-
-                // this.$db.getDB((db) => {
-                //     let dbo = db.db('vis');         // 选择数据库'vis'
-                //     for (let idIdx = 0; idIdx < ids.length; idIdx++)    // 遍历每个人员，查出一条路径就画一条路径
-                //         dbo.collection('days').aggregate([              // 做连接，查出指定人员的路径信息
-                //             {
-                //                 $lookup:
-                //                     {from: 'sensors', localField: 'sid', foreignField: 'sid', as: 'route'}
-                //             },
-                //             {
-                //                 $match: {"id": ids[idIdx], 'day': day}
-                //             },
-                //             {
-                //                 $project: {'route': 3, 'id': 1, 'time': 2, '_id': 0}    // 数字顺序无关紧要
-                //             }])
-                //             .toArray((err, res) => {    // 将查询到的记录转成数组
-                //                 if (err) throw err;
-                //                 console.log('find:', ids[idIdx]);
-                //                 let tRoute = [];
-                //                 for (let i = 0; i < res.length; i++) {  // 遍历查出来的每条记录
-                //                     tRoute.push({time: res[i].time, route: res[i].route[0], duration: 0});  // 将记录中有用的部分取出，
-                //                     // 形成新数组
-                //                 }
-                //                 tRoute.sort((a, b) => {
-                //                     return a.time - b.time;
-                //                 });
-                //                 for (let i = tRoute.length - 1; i >= 0; i--) {  // 计算每个路径点的停留时长
-                //                     tRoute[i].duration = tRoute[i].time - tRoute[0].time;
-                //                 }
-                //                 console.log(tRoute);
-                //                 renderRoutes(tRoute); // 获得路径后显示出来
-                //             });
-                // });
             }
         }
     }
