@@ -12,6 +12,22 @@
                 </el-select>
             </el-col>
         </el-row>
+        <div>
+            <div style="margin: 10px 0;"></div>
+            <div style="display: inline-block; margin-right: 20px">
+                入口：
+                <el-checkbox-group v-model="checkedEntranceList">
+                    <el-checkbox v-for="sid in entranceList" :label="sid" :key="sid">{{sid}}</el-checkbox>
+                </el-checkbox-group>
+            </div>
+            <div style="display: inline-block; margin: 0 40px">
+                出口：
+                <el-checkbox-group v-model="checkedExitList">
+                    <el-checkbox v-for="sid in exitList" :label="sid" :key="sid">{{sid}}</el-checkbox>
+                </el-checkbox-group>
+            </div>
+            <el-button @click="handleCheckedListChange">更新</el-button>
+        </div>
         <div id="dual_line" style="width: 1200px; height: 600px; margin-top: 10px"></div>
     </div>
 </template>
@@ -135,6 +151,11 @@
                 entranceData: [[], [], [], []],
                 departureData: [[], [], [], []],
                 chartReady: 0,
+                checkAll: false,
+                checkedEntranceList: [11300, 11502, 11504, 11507],
+                checkedExitList: [10019, 11505, 11515, 11517],
+                entranceList: [11300, 11502, 11504, 11507],
+                exitList: [10019, 11505, 11515, 11517]
             }
         },
         mounted() {
@@ -142,11 +163,7 @@
             this.myChart = echarts.init(document.getElementById('dual_line'));
             option.xAxis[0].data = option.xAxis[1].data = util.timeDataGen();  // 设置坐标轴文字
             this.myChart.setOption(option);
-            for (let day = 1; day <= 3; day++) {
-                this.getEntranceCount(day);    // 查询入场人数
-                this.getDepartureCount(day);   // 查询出场人数
-            }
-
+            this.getChartData();
         },
         watch: {
             dayValue: function () {
@@ -160,39 +177,47 @@
                 return parseInt(this.chartReady / 2) === 0;
             },
             options1: function () {
+                if (this.chartReady === 6) console.log('出入场数据读取完成');
                 let options = [];
                 for (let opt = 0; opt < parseInt(this.chartReady / 2); opt++) options.push(this.tmpOptions1[opt]);
                 return options;
             }
         },
         methods: {
+            getChartData() {
+                for (let day = 1; day <= 3; day++) {
+                    this.getEntranceCount(day);    // 查询入场人数
+                    this.getDepartureCount(day);   // 查询出场人数
+                }
+            },
+            handleCheckedListChange() {
+                this.chartReady = 0;
+                this.dayValue = null;
+                this.entranceData = [[], [], [], []];
+                this.departureData = [[], [], [], []];
+                this.getChartData();
+            },
             getEntranceCount(day) {
                 this.$db.query(
-                    "select `time` from days where `day` = ? and `sid` in (11300,11502,11504,11507) order by `time`",
-                    [day],
+                    // "select `time` from days where `day` = ? and `sid` in (11300,11502,11504,11507) order by `time`",
+                    "select `time` from days where `day` = ? and `sid` in (?) order by `time`",
+                    [day, (this.checkedEntranceList.length === 0 ? [0] : this.checkedEntranceList)],
                     (err, timeArr, field) => {
                         if (err) throw err;
                         this.entranceData[day] = util.getTimePointArray(timeArr);
-                        // option.series[0].data = util.getTimePointArray(timeArr);
-                        // this.myChart.setOption(option);
                         this.chartReady++;
-                        // console.log(this.chartReady);
-                        // if (this.chartReady === 6) this.selectionDisabled = false;
                     }
                 );
             },
             getDepartureCount(day) {
                 this.$db.query(
-                    "select `time` from days where `day` = ? and `sid` in (10019,11505,11515,11517) order by `time`",
-                    [day],
+                    // "select `time` from days where `day` = ? and `sid` in (10019,11505,11515,11517) order by `time`",
+                    "select `time` from days where `day` = ? and `sid` in (?) order by `time`",
+                    [day, (this.checkedExitList.length === 0 ? [0] : this.checkedExitList)],
                     (err, timeArr, field) => {
                         if (err) throw err;
                         this.departureData[day] = util.getTimePointArray(timeArr);
-                        // option.series[1].data = util.getTimePointArray(timeArr);
-                        // this.myChart.setOption(option);
                         this.chartReady++;
-                        // console.log(this.chartReady);
-                        // if (this.chartReady === 6) this.selectionDisabled = false;
                     }
                 );
             }
