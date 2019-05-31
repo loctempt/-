@@ -342,7 +342,7 @@
                 console.log(sid, '在', time, '时刻有人数', cnt);
                 vm.sensorId = sid;
                 vm.countPersons = cnt;
-                vm.dialogTableVisible = true;
+                vm.singleSensorTableVisible = true;
                 vm.idList = res;
                 for (let i = 0; i < res.length; i++) res[i].time = util.parseTime(res[i].time);
                 console.log(res);
@@ -4929,12 +4929,19 @@
             // this.showHeatMap(1, 32);
         },
         methods: {
+            /**
+             * 初始化热力图
+             */
             initHeatMap: function () {
-                renderTransparentLayer();
-                renderHeatMapLegend(marginLeft + 30 * rectWidth + 20, marginTop, linearGradientStartRgb, linearGradientEndRgb);
-                this.showHeatMap();
+                renderTransparentLayer();   // 显示透明遮罩
+                renderHeatMapLegend(marginLeft + 30 * rectWidth + 20, marginTop, linearGradientStartRgb, linearGradientEndRgb); // 显示图例
+                this.showHeatMap();         // 显示热力图
             },
-            showHeatMap: function () {//传入日期
+
+            /**
+             * 用于查询数据并调用渲染热力图函数
+             */
+            showHeatMap: function () {
                 let day = this.dayValue, timePoint = this.timePointValue;
                 let startTime = baseTime + timePoint * timeInterval;
                 let endTime = startTime + timeInterval;

@@ -148,22 +148,21 @@
                         label: 'day3'
                     }
                 ],
-                entranceData: [[], [], [], []],
-                departureData: [[], [], [], []],
-                chartReady: 0,
-                checkAll: false,
-                checkedEntranceList: [11300, 11502, 11504, 11507],
-                checkedExitList: [10019, 11505, 11515, 11517],
-                entranceList: [11300, 11502, 11504, 11507],
-                exitList: [10019, 11505, 11515, 11517]
+                entranceData: [[], [], [], []],     // 子数组个数为4，便于从1开始计算下标，从而与取值范围1、2、3的dayValue对应
+                departureData: [[], [], [], []],    // 子数组个数为4，便于从1开始计算下标，从而与取值范围1、2、3的dayValue对应
+                chartReady: 0,                      // 用来表示查询状态，0为初态——无数据；6为末态——数据齐全
+                checkedEntranceList: [11300, 11502, 11504, 11507],  // 默认入口全选中
+                checkedExitList: [10019, 11505, 11515, 11517],      // 默认出口全选中
+                entranceList: [11300, 11502, 11504, 11507],         // 入口候选列表
+                exitList: [10019, 11505, 11515, 11517]              // 出口候选列表
             }
         },
         mounted() {
             // 生成echarts
-            this.myChart = echarts.init(document.getElementById('dual_line'));
-            option.xAxis[0].data = option.xAxis[1].data = util.timeDataGen();  // 设置坐标轴文字
-            this.myChart.setOption(option);
-            this.getChartData();
+            this.myChart = echarts.init(document.getElementById('dual_line'));  // 在#dual_line中初始化图像
+            option.xAxis[0].data = option.xAxis[1].data = util.timeDataGen();   // 设置坐标轴文字
+            this.myChart.setOption(option);                                     // 设置初始数据，刷新图像
+            this.getChartData();                                                // 获取统计数据
         },
         watch: {
             dayValue: function () {
@@ -179,7 +178,8 @@
             options1: function () {
                 if (this.chartReady === 6) console.log('出入场数据读取完成');
                 let options = [];
-                for (let opt = 0; opt < parseInt(this.chartReady / 2); opt++) options.push(this.tmpOptions1[opt]);
+                for (let opt = 0; opt < parseInt(this.chartReady / 2); opt++)
+                    options.push(this.tmpOptions1[opt]);    // 从数据库中取回哪些天的数据就令这些天可选
                 return options;
             }
         },
@@ -199,25 +199,23 @@
             },
             getEntranceCount(day) {
                 this.$db.query(
-                    // "select `time` from days where `day` = ? and `sid` in (11300,11502,11504,11507) order by `time`",
                     "select `time` from days where `day` = ? and `sid` in (?) order by `time`",
                     [day, (this.checkedEntranceList.length === 0 ? [0] : this.checkedEntranceList)],
                     (err, timeArr, field) => {
                         if (err) throw err;
-                        this.entranceData[day] = util.getTimePointArray(timeArr);
-                        this.chartReady++;
+                        this.entranceData[day] = util.getTimePointArray(timeArr);   // 将原始数据转化为时间点数组
+                        this.chartReady++;                                          // 查到数据后更新计数器
                     }
                 );
             },
             getDepartureCount(day) {
                 this.$db.query(
-                    // "select `time` from days where `day` = ? and `sid` in (10019,11505,11515,11517) order by `time`",
                     "select `time` from days where `day` = ? and `sid` in (?) order by `time`",
                     [day, (this.checkedExitList.length === 0 ? [0] : this.checkedExitList)],
                     (err, timeArr, field) => {
                         if (err) throw err;
-                        this.departureData[day] = util.getTimePointArray(timeArr);
-                        this.chartReady++;
+                        this.departureData[day] = util.getTimePointArray(timeArr);  // 将原始数据转化为时间点数组
+                        this.chartReady++;                                          // 查到数据后更新计数器
                     }
                 );
             }
