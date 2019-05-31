@@ -286,7 +286,7 @@
                 vm.personIdList = vm.idList.map(item => {
                     return { value: item.id, label: item.id };
                 });
-                console.log(res);
+                // console.log(res);
             }
 
         )
@@ -4619,7 +4619,7 @@
                 dayValue: null,
                 timePointValue: null,
                 loading: false,
-                personValue:null,
+                personValue:[],
                 routeValue:null,
                 disableTimeSelect:true,
                 disableIdSelect:false,
@@ -4987,7 +4987,7 @@
                     this.loading = true;
                     setTimeout(() => {
                         this.loading = false;
-                        console.log(this.personIdList);
+                        // console.log(this.personIdList);
                         this.personIdOptions = this.personIdList.filter(item => {
                             return item.label.toString().indexOf(query) > -1;
                         });
