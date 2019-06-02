@@ -84,5 +84,5 @@ module.exports = {
         }
         console.log(ret);
         return ret;
-    }
+    },
 };

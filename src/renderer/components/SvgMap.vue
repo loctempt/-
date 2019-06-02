@@ -341,8 +341,7 @@
                 return 'rgba' + rgb.substr(3, rgb.length - 4) + ',0.7)';    // 将比例尺计算出的rgb颜色转换成rgba颜色
             })
             .style('cursor', 'pointer')
-            .on('mouseup', function (d) {
-                console.log(d.sid);
+            .on('click', function (d) {
                 getIdListBySidAndDayAndTime(d.sid, d.day, d.time, d.cnt);
             })
     }
@@ -355,8 +354,10 @@
      * @param cnt 范围内人数
      */
     function getIdListBySidAndDayAndTime(sid, day, time, cnt) {
+        console.log(sid);
+
         db.query(
-            'select `id`, `time` from `days` join sensors using(`sid`) where `sid`=? and `day`=? and `time` between ? and ? group by `id`',
+            'select `id`, `time` from `days_detail` where `sid`=? and `day`=? and `time` between ? and ? group by `id`',
             [sid, day, time, time + 600],
             (err, res, field) => {
                 if (err) throw err;
@@ -366,7 +367,7 @@
                 vm.singleSensorTableVisible = true;
                 vm.idList = res;
                 for (let i = 0; i < res.length; i++) res[i].time = util.parseTime(res[i].time);
-                console.log(res);
+                // console.log(res);
             }
         )
     }
@@ -601,7 +602,7 @@
         watch: {
             timePointValue: function (newTimePoint, oldTimePoint) {
                 console.log("dayval: " + this.dayValue, "timpointval: " + this.timePointValue);
-                if (this.heatMapSwitch)
+                if (this.heatMapSwitch && this.dayValue != null)
                     this.showHeatMap(this.dayValue, this.timePointValue);
             },
             dayValue: function (newDay, oldDay) {
@@ -694,7 +695,7 @@
                 let endTime = startTime + timeInterval;
                 console.log(startTime, endTime);
                 this.$db.query(
-                    'select sid, day, x, y, floor, time, count(*) cnt from `days` join sensors using(`sid`) where `day`=? and `time` between ? and ? group by `sid`',
+                    'select sid, day, x, y, floor, time, count(*) cnt from `days_detail` where `day`=? and `time` between ? and ? group by `sid`',
                     [day, startTime, endTime],    // 取第timePoint个时间间隔内的人数, 此处两个表达式的值单位都为秒
                     (err, res, field) => {
                         if (err) throw err;
