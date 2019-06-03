@@ -32,6 +32,7 @@
                 if (this.progressCnt === this.idsLength) {
                     console.log('idMap读取完成');  // idMap构造完成后显示之
                     // console.log('distance:', this.levenshteinDistance(this.idMap[11378], this.idMap[11396]));
+                    // console.log('distance:', this.levenshteinDistance([1,2,3,4,5],[2,3,4,5]));
                     for(let id in this.idMap) data.push(this.idMap[id]);
                     this.kMeans();
                 }
@@ -40,11 +41,11 @@
         methods: {
             kMeans: function () {
                 let run = true;
-                let round = 0;
+                let round = 1;
                 while (run) {
+                    console.log('round',round);
                     run = this.moveMeans();
                     round++;
-                    console.log(round);
                 }
                 console.log('聚类完成');
                 console.log(assignments);
@@ -63,6 +64,21 @@
                 return m;                                 // 大于等于目标的第一个元素
             },
             moveMeans: function () {
+                function mostCommonVal(distance) {      // 取众数
+                    let cntVal = {};
+                    let max = 0;                        // 最大计数
+                    let mostCommonDist = -1;            // 众数距离
+                    for(let pointIndex in distance){    // 遍历距离
+                        let dist = distance[pointIndex].distance;
+                        if(!cntVal[dist]) cntVal[dist] = 1; // 桶排序
+                        else cntVal[dist]++;
+                        if(cntVal[dist] > max){         // 记录最大
+                            max = cntVal[dist];
+                            mostCommonDist = dist;
+                        }
+                    }
+                    return mostCommonDist;
+                }
                 this.makeAssignment();
                 let moved = false;
                 let distanceSums = Array(means.length);   // 每个聚类中点到中心的距离和
@@ -87,21 +103,30 @@
                 let averages = Array(means.length);
                 let newMeans = Array(means.length);
                 for (let meanIndex in means) {
-                    averages[meanIndex] = Math.round(distanceSums[meanIndex] / counts[meanIndex]);  // 计算平均距离
+                    // averages[meanIndex] = Math.round(distanceSums[meanIndex] / counts[meanIndex]);  // 计算平均距离
+                    averages[meanIndex] = mostCommonVal(distances[meanIndex]);
                     distances.sort((a, b) => {
                         return a.distance - b.distance
                     });
                 }
+                console.log('---- move mean ----');
                 for (let meanIndex in means) {
                     console.log(distances[meanIndex]);
-                    console.log(averages[meanIndex]);
+                    // console.log(averages[meanIndex]);
                     console.log(this.upperBound(distances[meanIndex], averages[meanIndex]));
                     let pointItem = distances[meanIndex][this.upperBound(distances[meanIndex], averages[meanIndex])];
-                    console.log(pointItem);
-                    let pointIndex = pointItem.pointIndex; // 以与聚类中心的距离最接近平均距离的点作为新的聚类中心
-                    newMeans[meanIndex] = data[pointIndex];    // 更新聚类中心
+                    // console.log(pointItem);
+                    let pointIndex = pointItem.pointIndex;      // 以与聚类中心的距离最接近平均距离的点作为新的聚类中心
+                    newMeans[meanIndex] = data[pointIndex];     // 更新聚类中心
                 }
-                if (newMeans.toString() === means.toString()) {    // 若聚类中心未发生改变，则返回false
+                console.log(newMeans);
+                function checkVariance(vm) {
+                    for(let meanIndex in means){
+                        if(vm.levenshteinDistance(newMeans[meanIndex], means[meanIndex]) > 20) return false;
+                    }
+                    return true;
+                }
+                if (checkVariance(this)/*newMeans.toString() === means.toString()*/) {    // 若聚类中心未发生改变，则返回false
                     return false;
                 } else {
                     means = newMeans;                          // 聚类中心发生改变，用新值覆盖老值，并返回true
