@@ -51,7 +51,7 @@
                         for (let i = 0; i < ids.length; i++) {  // 遍历id
                             let id = ids[i].id;
                             this.$db.query(                     // 查询这个id走过的场所序号
-                                'select `id`, `detail_id`, `name` from `days_detail` a, `floor_detail` b where `id`=? and a.x between b.x1 and b.x2 and a.y between b.y1 and b.y2 and a.floor = b.floor order by `day`, `time`',
+                                'select `id`, `detail_id`, `name`, `day` from `days_detail` a, `floor_detail` b where `id`=? and a.x between b.x1 and b.x2 and a.y between b.y1 and b.y2 and a.floor = b.floor order by `day`, `time`',
                                 [id],
                                 (err, seq) => {
                                     // console.log(seq);
@@ -59,7 +59,7 @@
                                     let prev = -1, t_cnt = 1;
                                     for (let j = 0; j < seq.length; j++)    // 子序列去重
                                         if (seq[j].detail_id !== prev) {
-                                            this.resData.push([id, seq[j].detail_id, t_cnt]);
+                                            this.resData.push([id, seq[j].detail_id, t_cnt, seq[j].day]);
                                             // result.push(seq[j]);
                                             // this.$db.query(
                                             //     'INSERT INTO `cluster_raw` values (?, ?, ?)',

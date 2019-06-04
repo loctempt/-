@@ -7,6 +7,7 @@
     let data = [];
     let assignments = [];
     let means = [[1], [1, 2], [1, 2, 3]];
+    let dbscanResult = {};
 
     export default {
         name: "Cluster",
@@ -33,12 +34,90 @@
                     console.log('idMap读取完成');  // idMap构造完成后显示之
                     // console.log('distance:', this.levenshteinDistance(this.idMap[11378], this.idMap[11396]));
                     // console.log('distance:', this.levenshteinDistance([1,2,3,4,5],[2,3,4,5]));
-                    for(let id in this.idMap) data.push(this.idMap[id]);
-                    this.kMeans();
+                    // for(let id in this.idMap) data.push(this.idMap[id]);
+                    // data = data.slice(0, 500);
+                    data = this.idMap;
+                    console.log(data[5]);
+                    console.log(data[6]);
+                    console.log(data[7]);
+                    // this.kMeans();
+                    dbscanResult = this.dbscan(2,20);
+                    console.log(dbscanResult);
                 }
             }
         },
         methods: {
+            /**
+             * 计算点x的epsilon-邻域中有多少个其他点
+             * @return {number}
+             */
+            N_epsilon: function(epsilon, x){
+                let cnt = 0;
+                let point = data[x];
+                for(let pointIndex in data){
+                    if(pointIndex === x) continue;
+                    let pointTmp = data[pointIndex];
+                    if(this.levenshteinDistance(point , pointTmp) <= epsilon) cnt++;
+                }
+                return cnt;
+            },
+            dbscan:function(epsilon, minPts){
+                console.log('构造Omega');
+                let Omega = [];                     // 核心对象集合
+                for(let pointIndex in data){        // 找出所有核心对象
+                    console.log('pointIndex:', pointIndex);
+                    if(this.N_epsilon(epsilon, pointIndex) >= minPts)
+                        Omega.push(pointIndex);
+                }
+                console.log('完成构造Omega');
+                let C = {};                         // 聚类簇集合
+                let k = 0;                          // 初始聚类簇数
+                let Gamma = [];                     // 未访问样本集合
+                for(let pointIndex in data) Gamma.push(pointIndex); // 初始化未访问样本集合
+                console.log('开始聚类');
+                while(Omega.length > 0){
+                    console.log('k:',k);
+                    console.log('Gamma:');
+                    console.log(Gamma);
+                    console.log('Omega:');
+                    console.log(Omega);
+                    let Gamma_old = [...Gamma];
+                    let Q = [];
+                    let o = Omega[0];
+                    console.log('o:',o,'o连接的点数：', this.N_epsilon(epsilon, o));
+                    Q.push(o);
+                    Gamma.splice(Gamma.indexOf(o), 1);
+                    while(Q.length > 0){
+                        let q = Q.shift();
+                        let point = data[q];
+                        if(this.N_epsilon(epsilon, q) >= minPts){   // 如果q是个核心元素，计算Delta
+                            // console.log('核心对象q：', q);
+                            let Delta = [];                         // 临时数组，保存点的下标pointIndex
+                            for(let GammaIndex in Gamma){           // 构造Delta
+                                let pointTmp = data[Gamma[GammaIndex]];    // Gamma中不会含有队列Q中弹出的元素，故无需设置continue条件
+                                if(this.levenshteinDistance(point, pointTmp) <= epsilon) Delta.push(Gamma[GammaIndex]);
+                            }
+                            Q = [...Q, ...Delta];                   // 将Delta中的元素放入q中
+                            for(let i in Delta){
+                                Gamma.splice(Gamma.indexOf(Delta[i]), 1);   // 从Gamma中去掉Delta中的元素
+                            }
+                        }
+                    }
+                    k += 1;                                         // 聚类簇编号更新
+                    for(let i in Gamma){
+                        Gamma_old.splice(Gamma_old.indexOf(Gamma[i]), 1);   // 得到聚类簇
+                    }
+                    C[k] = Gamma_old;                               // 记录聚类簇
+                    console.log('Gamma_old:');
+                    console.log(Gamma_old);
+                    for(let i in Gamma_old){
+                        let coreObjectIndex = Omega.indexOf(Gamma_old[i]);
+                        if(coreObjectIndex >= 0)                    // 找到聚类簇C[k]中的核心对象
+                            Omega.splice(coreObjectIndex, 1);       // 将该核心对象从核心对象集合Omega中移除
+                    }
+                }
+                return {cluster: C, noise: Gamma};                  // 最后Gamma中剩下的元素就是噪声对象
+            },
             kMeans: function () {
                 let run = true;
                 let round = 1;
@@ -168,7 +247,7 @@
             },
             initIdMap: function () {
                 this.$db.query(
-                    'select distinct id from days',
+                    'select id from id_day1',
                     (err, res) => {
                         if (err) throw err;
                         for (let i = 0; i < res.length; i++) this.ids.push(res[i].id);   // 获得所有id的列表
@@ -181,7 +260,7 @@
                 for (let i = 0; i < this.ids.length; i++) {          // 遍历ids，查找每个id对应的路径序列
                     let id = this.ids[i];
                     this.$db.query(
-                        'select * from cluster_raw where id=?',
+                        'select * from cluster_raw where id=? and `day`=1',
                         [id],
                         (err, res) => {
                             if (err) throw err;
