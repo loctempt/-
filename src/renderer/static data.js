@@ -3849,7 +3849,8 @@ export default {
             "x2": 10,
             "y2": 6,
             "type": "public area",
-            "floor": 2
+            "floor": 2,
+            "detail_id": 1
         },
         {
             "name": "room5",
@@ -3858,7 +3859,8 @@ export default {
             "x2": 12,
             "y2": 6,
             "type": "public area",
-            "floor": 2
+            "floor": 2,
+            "detail_id": 2
         },
         {
             "name": "休闲区",
@@ -3867,7 +3869,8 @@ export default {
             "x2": 16,
             "y2": 6,
             "type": "public area",
-            "floor": 2
+            "floor": 2,
+            "detail_id": 3
         },
         {
             "name": "room6",
@@ -3876,10 +3879,11 @@ export default {
             "x2": 8,
             "y2": 12,
             "type": "public area",
-            "floor": 2
+            "floor": 2,
+            "detail_id": 4
         },
         {
-            "name": "厕所3",
+            "name": "厕所",
             "x1": 4,
             "y1": 10,
             "x2": 6,
@@ -3912,7 +3916,8 @@ export default {
             "x2": 4,
             "y2": 6,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 5
         },
         {
             "name": "分会场B",
@@ -3921,7 +3926,8 @@ export default {
             "x2": 6,
             "y2": 6,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 6
         },
         {
             "name": "分会场C",
@@ -3930,7 +3936,8 @@ export default {
             "x2": 8,
             "y2": 6,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 7
         },
         {
             "name": "分会场D",
@@ -3939,7 +3946,8 @@ export default {
             "x2": 10,
             "y2": 6,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 8
         },
         {
             "name": "签到处",
@@ -3948,7 +3956,8 @@ export default {
             "x2": 14,
             "y2": 6,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 9
         },
         {
             "name": "海报区",
@@ -3957,10 +3966,11 @@ export default {
             "x2": 8,
             "y2": 9,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 10
         },
         {
-            "name": "厕所1",
+            "name": "厕所",
             "x1": 4,
             "y1": 10,
             "x2": 6,
@@ -3975,7 +3985,8 @@ export default {
             "x2": 10,
             "y2": 12,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 11
         },
         {
             "name": "room2",
@@ -3984,7 +3995,8 @@ export default {
             "x2": 12,
             "y2": 12,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 12
         },
         {
             "name": "扶梯",
@@ -4011,7 +4023,8 @@ export default {
             "x2": 12,
             "y2": 19,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 13
         },
         {
             "name": "主会场",
@@ -4020,7 +4033,8 @@ export default {
             "x2": 12,
             "y2": 29,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 14
         },
         {
             "name": "服务台",
@@ -4029,7 +4043,8 @@ export default {
             "x2": 16,
             "y2": 21,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 15
         },
         {
             "name": "room3",
@@ -4038,7 +4053,8 @@ export default {
             "x2": 16,
             "y2": 25,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 16
         },
         {
             "name": "room4",
@@ -4047,7 +4063,8 @@ export default {
             "x2": 16,
             "y2": 27,
             "type": "public area",
-            "floor": 1
+            "floor": 1,
+            "detail_id": 17
         },
         {
             "name": "厕所",

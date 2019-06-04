@@ -1,13 +1,76 @@
 <template>
-
+    <div class="chartContainer">
+        <el-row :gutter="20">
+            <el-col :span="4">
+                <el-select v-model="dayValue" placeholder="选择日期">
+                    <el-option
+                            v-for="item in options1"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-col>
+        </el-row>
+        <div id="cluster_chart" style="width: 1200px; height: 1200px; margin-top: 10px"></div>
+    </div>
 </template>
 
 <script>
+    let echarts = require('echarts');
 
     let data = [];
     let assignments = [];
     let means = [[1], [1, 2], [1, 2, 3]];
     let dbscanResult = {};
+    let globalVarDay = 3;
+    let myChart;
+    let chartData = {
+        name: "Day" + globalVarDay,
+        children: []
+    };
+    let option = {
+        tooltip: {
+            trigger: 'item',
+            triggerOn: 'mousemove'
+        },
+        series: [
+            {
+                type: 'tree',
+                data: [],
+                top: '18%',
+                bottom: '14%',
+                layout: 'radial',
+                symbol: 'emptyCircle',
+                symbolSize: 7,
+                initialTreeDepth: 1,
+                animationDurationUpdate: 750,
+                roam: true
+            }
+        ],
+        // dataZoom:[
+        //     {type: 'inside'}
+        // ]
+    };
+
+    function setChartOption(clusterData) {
+        chartData.name = 'Day' + globalVarDay;
+        chartData.children = [];
+        let tmp = {};
+        for (let clusterDataIndex in clusterData) {
+            let clusterItem = clusterData[clusterDataIndex];
+            let k = clusterItem.cluster;
+            let id = clusterItem.id;
+            if (!tmp[k]) tmp[k] = {name: k, children: []};
+            tmp[k].children.push({name: id});
+        }
+        for (let attrIndex in tmp) {
+            chartData.children.push(tmp[attrIndex]);
+        }
+        option.series[0].data.push(chartData);
+        console.log(chartData);
+        myChart.setOption(option);
+    }
 
     export default {
         name: "Cluster",
@@ -17,10 +80,24 @@
                 ids: [],
                 idsLength: 0,     // ids数组长度
                 progressCnt: 0,    // 由构造idMap进程的计数器
+                options1: [
+                    {
+                        value: '1',
+                        label: 'day1'
+                    }, {
+                        value: '2',
+                        label: 'day2'
+                    }, {
+                        value: '3',
+                        label: 'day3'
+                    }
+                ],
+                dayValue: null,
             }
         },
         mounted() {
-            this.initIdMap();
+            // this.initIdMap();
+            myChart = echarts.init(document.getElementById('cluster_chart'));
         },
         computed: {
             idMapReady: function () {
@@ -28,6 +105,11 @@
             }
         },
         watch: {
+            dayValue: function(newDayValue){
+                console.log('dayValue:', newDayValue);
+                globalVarDay = newDayValue;
+                this.getClusterData();
+            },
             progressCnt: function () {
                 if (this.progressCnt % 1000 === 0) console.log(this.progressCnt);
                 if (this.progressCnt === this.idsLength) {
@@ -41,42 +123,64 @@
                     console.log(data[6]);
                     console.log(data[7]);
                     // this.kMeans();
-                    dbscanResult = this.dbscan(2,20);
-                    console.log(dbscanResult);
+
+                    // 聚类并输出
+                    // dbscanResult = this.dbscan(2, 10);
+                    // console.log(dbscanResult);
+                    // let cluster = [];
+                    // for (let cIndex in dbscanResult.cluster) {
+                    //     for (let pointIndex in dbscanResult.cluster[cIndex]) {
+                    //         cluster.push([dbscanResult.cluster[cIndex][pointIndex], cIndex]);
+                    //     }
+                    // }
+                    // for (let pointIndex in dbscanResult.noise) {
+                    //     cluster.push([dbscanResult.noise[pointIndex], -1]);
+                    // }
+                    // writeJson(cluster);
                 }
             }
         },
         methods: {
+            getClusterData: function(){
+              this.$db.query(
+                  'SELECT * FROM cluster_day'+globalVarDay,
+                  (err, clusterData)=>{
+                      if(err) throw err;
+                      console.log(clusterData);
+                      setChartOption(clusterData);
+                  }
+              );
+            },
             /**
              * 计算点x的epsilon-邻域中有多少个其他点
              * @return {number}
              */
-            N_epsilon: function(epsilon, x){
+            N_epsilon: function (epsilon, x) {
                 let cnt = 0;
                 let point = data[x];
-                for(let pointIndex in data){
-                    if(pointIndex === x) continue;
+                for (let pointIndex in data) {
+                    if (pointIndex === x) continue;
                     let pointTmp = data[pointIndex];
-                    if(this.levenshteinDistance(point , pointTmp) <= epsilon) cnt++;
+                    if (this.levenshteinDistance(point, pointTmp) <= epsilon) cnt++;
                 }
                 return cnt;
             },
-            dbscan:function(epsilon, minPts){
+            dbscan: function (epsilon, minPts) {
                 console.log('构造Omega');
                 let Omega = [];                     // 核心对象集合
-                for(let pointIndex in data){        // 找出所有核心对象
+                for (let pointIndex in data) {        // 找出所有核心对象
                     console.log('pointIndex:', pointIndex);
-                    if(this.N_epsilon(epsilon, pointIndex) >= minPts)
+                    if (this.N_epsilon(epsilon, pointIndex) >= minPts)
                         Omega.push(pointIndex);
                 }
                 console.log('完成构造Omega');
                 let C = {};                         // 聚类簇集合
                 let k = 0;                          // 初始聚类簇数
                 let Gamma = [];                     // 未访问样本集合
-                for(let pointIndex in data) Gamma.push(pointIndex); // 初始化未访问样本集合
+                for (let pointIndex in data) Gamma.push(pointIndex); // 初始化未访问样本集合
                 console.log('开始聚类');
-                while(Omega.length > 0){
-                    console.log('k:',k);
+                while (Omega.length > 0) {
+                    console.log('k:', k);
                     console.log('Gamma:');
                     console.log(Gamma);
                     console.log('Omega:');
@@ -84,35 +188,35 @@
                     let Gamma_old = [...Gamma];
                     let Q = [];
                     let o = Omega[0];
-                    console.log('o:',o,'o连接的点数：', this.N_epsilon(epsilon, o));
+                    console.log('o:', o, 'o连接的点数：', this.N_epsilon(epsilon, o));
                     Q.push(o);
                     Gamma.splice(Gamma.indexOf(o), 1);
-                    while(Q.length > 0){
+                    while (Q.length > 0) {
                         let q = Q.shift();
                         let point = data[q];
-                        if(this.N_epsilon(epsilon, q) >= minPts){   // 如果q是个核心元素，计算Delta
+                        if (this.N_epsilon(epsilon, q) >= minPts) {   // 如果q是个核心元素，计算Delta
                             // console.log('核心对象q：', q);
                             let Delta = [];                         // 临时数组，保存点的下标pointIndex
-                            for(let GammaIndex in Gamma){           // 构造Delta
+                            for (let GammaIndex in Gamma) {           // 构造Delta
                                 let pointTmp = data[Gamma[GammaIndex]];    // Gamma中不会含有队列Q中弹出的元素，故无需设置continue条件
-                                if(this.levenshteinDistance(point, pointTmp) <= epsilon) Delta.push(Gamma[GammaIndex]);
+                                if (this.levenshteinDistance(point, pointTmp) <= epsilon) Delta.push(Gamma[GammaIndex]);
                             }
                             Q = [...Q, ...Delta];                   // 将Delta中的元素放入q中
-                            for(let i in Delta){
+                            for (let i in Delta) {
                                 Gamma.splice(Gamma.indexOf(Delta[i]), 1);   // 从Gamma中去掉Delta中的元素
                             }
                         }
                     }
                     k += 1;                                         // 聚类簇编号更新
-                    for(let i in Gamma){
+                    for (let i in Gamma) {
                         Gamma_old.splice(Gamma_old.indexOf(Gamma[i]), 1);   // 得到聚类簇
                     }
                     C[k] = Gamma_old;                               // 记录聚类簇
                     console.log('Gamma_old:');
                     console.log(Gamma_old);
-                    for(let i in Gamma_old){
+                    for (let i in Gamma_old) {
                         let coreObjectIndex = Omega.indexOf(Gamma_old[i]);
-                        if(coreObjectIndex >= 0)                    // 找到聚类簇C[k]中的核心对象
+                        if (coreObjectIndex >= 0)                    // 找到聚类簇C[k]中的核心对象
                             Omega.splice(coreObjectIndex, 1);       // 将该核心对象从核心对象集合Omega中移除
                     }
                 }
@@ -122,7 +226,7 @@
                 let run = true;
                 let round = 1;
                 while (run) {
-                    console.log('round',round);
+                    console.log('round', round);
                     run = this.moveMeans();
                     round++;
                 }
@@ -147,17 +251,18 @@
                     let cntVal = {};
                     let max = 0;                        // 最大计数
                     let mostCommonDist = -1;            // 众数距离
-                    for(let pointIndex in distance){    // 遍历距离
+                    for (let pointIndex in distance) {    // 遍历距离
                         let dist = distance[pointIndex].distance;
-                        if(!cntVal[dist]) cntVal[dist] = 1; // 桶排序
+                        if (!cntVal[dist]) cntVal[dist] = 1; // 桶排序
                         else cntVal[dist]++;
-                        if(cntVal[dist] > max){         // 记录最大
+                        if (cntVal[dist] > max) {         // 记录最大
                             max = cntVal[dist];
                             mostCommonDist = dist;
                         }
                     }
                     return mostCommonDist;
                 }
+
                 this.makeAssignment();
                 let moved = false;
                 let distanceSums = Array(means.length);   // 每个聚类中点到中心的距离和
@@ -199,12 +304,14 @@
                     newMeans[meanIndex] = data[pointIndex];     // 更新聚类中心
                 }
                 console.log(newMeans);
+
                 function checkVariance(vm) {
-                    for(let meanIndex in means){
-                        if(vm.levenshteinDistance(newMeans[meanIndex], means[meanIndex]) > 20) return false;
+                    for (let meanIndex in means) {
+                        if (vm.levenshteinDistance(newMeans[meanIndex], means[meanIndex]) > 20) return false;
                     }
                     return true;
                 }
+
                 if (checkVariance(this)/*newMeans.toString() === means.toString()*/) {    // 若聚类中心未发生改变，则返回false
                     return false;
                 } else {
@@ -247,7 +354,7 @@
             },
             initIdMap: function () {
                 this.$db.query(
-                    'select id from id_day1',
+                    'select id from id_day' + globalVarDay,
                     (err, res) => {
                         if (err) throw err;
                         for (let i = 0; i < res.length; i++) this.ids.push(res[i].id);   // 获得所有id的列表
@@ -260,8 +367,8 @@
                 for (let i = 0; i < this.ids.length; i++) {          // 遍历ids，查找每个id对应的路径序列
                     let id = this.ids[i];
                     this.$db.query(
-                        'select * from cluster_raw where id=? and `day`=1',
-                        [id],
+                        'select * from cluster_raw where id=? and `day`=?',
+                        [id, globalVarDay],
                         (err, res) => {
                             if (err) throw err;
                             this.idMap[id] = [];
@@ -274,8 +381,40 @@
             }
         }
     }
+
+    var fs = require('fs');
+
+    /**
+     * 将data保存至json文件中
+     * @param params
+     */
+    function writeJson(params) {
+        //现将json文件读出来
+        fs.readFile('./data.json', function (err, data) {
+            if (err) {
+                return console.error(err);
+            }
+            var person = data.toString();//将二进制的数据转换为字符串
+            person = JSON.parse(person);//将字符串转换为json对象
+            person.data = params;//将传来的对象push进数组对象中
+            console.log(person.data);
+            var str = JSON.stringify(person);//因为nodejs的写入文件只认识字符串或者二进制数，所以把json对象转换成字符串重新写入json文件中
+            fs.writeFile('./data.json', str, function (err) {
+                if (err) {
+                    console.error(err);
+                }
+                console.log('----------新增成功-------------');
+            })
+        })
+    }
 </script>
 
 <style scoped>
-
+    .chartContainer {
+        padding-left: 10%;
+        margin-top: 30px;
+        /*display: flex;*/
+        /*align-items: center;*/
+        /*justify-content: center;*/
+    }
 </style>
