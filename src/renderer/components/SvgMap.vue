@@ -488,8 +488,8 @@
             rangeSensorFigure.setOption(rangeSensorFigureOption);                           // 刷新图像
             console.log('计算', d.name, '统计数据');
             db.query(
-                'select `time` from days join sensors using(`sid`) where `day` = ? and `floor`=? and `x` between ? and ? and `y` between ? and ? group by `id` order by `time`',
-                [vm.dayValue, d.floor, d.x1, d.x2, d.y1, d.y2],
+                'select `time` from detail_day'+vm.dayValue+' where floor=? and `x` between ? and ? and `y` between ? and ? group by `id` order by `time`',
+                [d.floor, d.x1, d.x2, d.y1, d.y2],
                 (err, timeArr, field) => {
                     if (err) throw err;
                     console.log('数据已获得');

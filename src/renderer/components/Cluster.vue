@@ -23,13 +23,18 @@
     let assignments = [];
     let means = [[1], [1, 2], [1, 2, 3]];
     let dbscanResult = {};
-    let globalVarDay = 3;
+    let globalVarDay = 1;
     let myChart;
     let chartData = {
         name: "Day" + globalVarDay,
         children: []
     };
     let option = {
+        title: {
+            text: '人员类型聚类',
+            subtext: '数据从地下来',
+            x: 'center'
+        },
         tooltip: {
             trigger: 'item',
             triggerOn: 'mousemove'
@@ -37,7 +42,7 @@
         series: [
             {
                 type: 'tree',
-                data: [],
+                data: [chartData],
                 top: '18%',
                 bottom: '14%',
                 layout: 'radial',
@@ -98,6 +103,7 @@
         mounted() {
             // this.initIdMap();
             myChart = echarts.init(document.getElementById('cluster_chart'));
+            myChart.setOption(option);
         },
         computed: {
             idMapReady: function () {
@@ -412,7 +418,7 @@
 <style scoped>
     .chartContainer {
         padding-left: 10%;
-        margin-top: 30px;
+        margin-top: 100px;
         /*display: flex;*/
         /*align-items: center;*/
         /*justify-content: center;*/
