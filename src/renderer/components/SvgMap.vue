@@ -54,8 +54,8 @@
                 传感器：{{sensorId}} <br>
                 总人数:{{countPersons}}
                 <el-table :data="idList">
-                    <el-table-column property="id" label="人员ID"></el-table-column>
-                    <el-table-column property="time" label="时间"></el-table-column>
+                    <el-table-column prop="id" label="人员ID"></el-table-column>
+                    <el-table-column prop="time" label="时间"></el-table-column>
                 </el-table>
             </el-dialog>
             <el-dialog title="范围人数统计" :visible.sync="rangeSensorFigureVisible" width="65%">
@@ -365,9 +365,9 @@
                 vm.sensorId = sid;
                 vm.countPersons = cnt;
                 vm.singleSensorTableVisible = true;
-                vm.idList = res;
                 for (let i = 0; i < res.length; i++) res[i].time = util.parseTime(res[i].time);
-                // console.log(res);
+                vm.idList = res;
+                console.log(res);
             }
         )
     }
