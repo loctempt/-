@@ -58,6 +58,7 @@
                     <el-table-column prop="time" label="时间"></el-table-column>
                 </el-table>
             </el-dialog>
+
             <el-dialog title="范围人数统计" :visible.sync="rangeSensorFigureVisible" width="65%">
                 <!--                位置：{{rangeName}}-->
                 <div id="rangeSensorFigure" style="width: 1200px; height: 500px; margin-top: 10px"></div>

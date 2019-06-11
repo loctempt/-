@@ -2,9 +2,23 @@
 
 > An electron-vue project
 
+### 重要的bug修复：
+执行以下命令以修复点击热力图方格后id列表无法显示的问题：
+```bash
+# remove /node_modules   删除 /node_modules 目录
+rm -r node_modules
+# update local repository    更新本地仓库版本
+git pull
+# reinstall dependencies   重新安装依赖
+cnpm i
+# run dev   运行开发环境
+npm run dev
+```
+
 #### Build Setup 构建指南
 
 ``` bash
+
 # clone the repository 下载仓库
 git clone git@github.com:loctempt/Visualization_experiment.git
 

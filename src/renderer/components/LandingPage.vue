@@ -11,7 +11,7 @@
     import SvgMap from './SvgMap'
     import EntranceDepartureFigure from './EntranceDepartureFigure'
     import Cluster from './Cluster'
-    let XLSX = require('xlsx');
+    // let XLSX = require('xlsx');
 
     export default {
         name: 'landing-page',
