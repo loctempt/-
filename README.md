@@ -7,6 +7,8 @@
 ```bash
 # remove /node_modules   删除 /node_modules 目录
 rm -r node_modules
+# update local repository    更新本地仓库版本
+git pull
 # reinstall dependencies   重新安装依赖
 cnpm i
 # run dev   运行开发环境
