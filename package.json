@@ -54,7 +54,7 @@
     "axios": "^0.18.0",
     "d3": "^5.9.2",
     "echarts": "latest",
-    "element-ui": "^2.9.0",
+    "element-ui": "2.9.0",
     "mongodb": "latest",
     "mysql": "latest",
     "vue": "^2.5.16",
