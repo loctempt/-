@@ -89,13 +89,13 @@
         ],
         yAxis: [
             {
-                name: '人数(人)',
+                name: '入场人数(人)',
                 type: 'value',
                 // max : 500
             },
             {
                 gridIndex: 1,
-                name: '人数(人)',
+                name: '出场人数(人)',
                 type: 'value',
                 inverse: true
             }
